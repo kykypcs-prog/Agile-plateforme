@@ -6,79 +6,92 @@ function Login() {
   const navigate = useNavigate()
   const [formData, setFormData] = useState({ email: '', password: '' })
   const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
- const handleSubmit = async (e) => {
-  e.preventDefault()
-  try {
-    const res = await login(formData)
-    localStorage.setItem('token', res.data.token)
-    localStorage.setItem('user', JSON.stringify(res.data.user))
-    
-    // Redirection selon le rôle
-    const role = res.data.user.role
-    if (role === 'ADMIN') {
-      navigate('/dashboard/admin')
-    } else if (role === 'CHEF') {
-      navigate('/dashboard/chef')
-    } else {
-      navigate('/dashboard/member')
+  const handleSubmit = async () => {
+    setLoading(true)
+    try {
+      const res = await login(formData)
+      localStorage.setItem('token', res.data.token)
+      localStorage.setItem('user', JSON.stringify(res.data.user))
+      const role = res.data.user.role
+      if (role === 'ADMIN') navigate('/dashboard/admin')
+      else if (role === 'CHEF') navigate('/dashboard/chef')
+      else navigate('/dashboard/member')
+    } catch (err) {
+      setError('Email ou mot de passe incorrect !')
+    } finally {
+      setLoading(false)
     }
-  } catch (err) {
-    setError('Email ou mot de passe incorrect !')
   }
-}
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-600 to-purple-700 flex items-center justify-center">
-      <div className="bg-white rounded-2xl p-8 w-full max-w-md shadow-2xl">
-        
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
+
+        {/* Logo */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-800">🚀 Agile Platform</h1>
-          <p className="text-gray-500 mt-2">Connectez-vous à votre compte</p>
+          <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center mx-auto mb-4">
+            <span className="text-white font-bold">A</span>
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900">Bon retour ! 👋</h1>
+          <p className="text-gray-500 text-sm mt-1">Connectez-vous à votre compte</p>
         </div>
 
-        {error && (
-          <div className="bg-red-100 text-red-600 p-3 rounded-lg mb-4 text-center">
-            {error}
-          </div>
-        )}
+        {/* Card */}
+        <div className="bg-white rounded-2xl p-8 border border-gray-100 shadow-sm">
 
-        <div className="space-y-4">
-          <div>
-            <label className="block text-gray-700 font-medium mb-1">Email</label>
-            <input
-              type="email"
-              placeholder="john@gmail.com"
-              className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500"
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-            />
-          </div>
-          <div>
-            <label className="block text-gray-700 font-medium mb-1">Mot de passe</label>
-            <input
-              type="password"
-              placeholder="••••••••"
-              className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500"
-              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-            />
-          </div>
+          {error && (
+            <div className="bg-red-50 text-red-600 text-sm p-3 rounded-xl mb-5 border border-red-100 flex items-center gap-2">
+              <span>⚠️</span> {error}
+            </div>
+          )}
 
-          <button
-            onClick={handleSubmit}
-            className="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition"
-          >
-            Se connecter
-          </button>
+          <div className="space-y-4">
+            <div>
+              <label className="text-xs font-medium text-gray-600 mb-1.5 block">EMAIL</label>
+              <input
+                type="email"
+                placeholder="john@gmail.com"
+                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-50 transition"
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-gray-600 mb-1.5 block">MOT DE PASSE</label>
+              <input
+                type="password"
+                placeholder="••••••••"
+                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-50 transition"
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              />
+            </div>
+
+            <button
+              onClick={handleSubmit}
+              disabled={loading}
+              className="w-full bg-indigo-600 text-white py-2.5 rounded-xl hover:bg-indigo-700 transition font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? 'Connexion...' : 'Se connecter →'}
+            </button>
+          </div>
         </div>
 
-        <p className="text-center text-gray-500 mt-6">
+        <p className="text-center text-gray-500 text-sm mt-5">
           Pas encore de compte ?{' '}
           <span
             onClick={() => navigate('/register')}
-            className="text-blue-600 font-medium cursor-pointer hover:underline"
+            className="text-indigo-600 font-medium cursor-pointer hover:underline"
           >
             S'inscrire
           </span>
+        </p>
+
+        <p
+          onClick={() => navigate('/')}
+          className="text-center text-gray-400 text-xs mt-3 cursor-pointer hover:text-gray-600 transition"
+        >
+          ← Retour à l'accueil
         </p>
 
       </div>

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { getProjects, createProject, deleteProject, getUsers, getStats, addMember, getMembers, removeMember, updateUserRole, getSprints, createSprint, deleteSprint } from '../services/api'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 import { LayoutDashboard, FolderKanban, Users, BarChart2, LogOut, Timer, ChevronRight, Trash2, Plus, X } from 'lucide-react'
+import BurndownChart from '../components/BurndownChart'
 
 function DashboardAdmin() {
   const navigate = useNavigate()
@@ -587,6 +588,8 @@ function DashboardAdmin() {
                   <div key={i} className={`bg-white rounded-2xl p-6 border ${stat.border} shadow-sm`}>
                     <p className="text-xs text-gray-500 font-medium mb-1">{stat.label}</p>
                     <p className={`text-3xl font-bold ${stat.color}`}>{stat.value}</p>
+                    {/* Burndown */}
+<BurndownChart projects={projects} />
                   </div>
                 ))}
               </div>

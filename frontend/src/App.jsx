@@ -7,6 +7,7 @@ import DashboardAdmin from './pages/DashboardAdmin'
 import DashboardMember from './pages/DashboardMember'
 import ProjectDetail from './pages/ProjectDetail'
 import ProtectedRoute from './components/ProtectedRoute'
+import RoleRoute from './components/RoleRoute'
 
 function App() {
   return (
@@ -15,21 +16,25 @@ function App() {
         <Route path="/" element={<Index />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/dashboard/chef" element={
-          <ProtectedRoute>
-            <DashboardChef />
-          </ProtectedRoute>
-        } />
+
         <Route path="/dashboard/admin" element={
-          <ProtectedRoute>
+          <RoleRoute allowedRole="ADMIN">
             <DashboardAdmin />
-          </ProtectedRoute>
+          </RoleRoute>
         } />
+
+        <Route path="/dashboard/chef" element={
+          <RoleRoute allowedRole="CHEF">
+            <DashboardChef />
+          </RoleRoute>
+        } />
+
         <Route path="/dashboard/member" element={
-          <ProtectedRoute>
+          <RoleRoute allowedRole="MEMBER">
             <DashboardMember />
-          </ProtectedRoute>
+          </RoleRoute>
         } />
+
         <Route path="/project/:id" element={
           <ProtectedRoute>
             <ProjectDetail />

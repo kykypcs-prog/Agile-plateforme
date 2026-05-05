@@ -38,6 +38,7 @@ export const updateUserRole = (id, role) => API.put(`/projects/users/${id}/role`
 export const getSprints = (projectId) => API.get(`/sprints/${projectId}`)
 export const createSprint = (data) => API.post('/sprints', data)
 export const deleteSprint = (id) => API.delete(`/sprints/${id}`)
+export const getBurndown = (sprintId) => API.get(`/sprints/burndown/${sprintId}`)
 
 // Tâches
 export const getTasks = (sprintId) => API.get(`/tasks/${sprintId}`)
