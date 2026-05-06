@@ -147,16 +147,23 @@ function ProjectDetail() {
   return (
     <div className="flex min-h-screen">
 
-      {/* Sidebar */}
+    {/* Sidebar */}
       <div className="w-64 bg-gray-900 text-white flex flex-col fixed h-full">
         <div className="p-6 border-b border-gray-700">
           <button
-            onClick={() => navigate('/dashboard')}
+            onClick={() => {
+              const user = JSON.parse(localStorage.getItem('user'))
+              if (user?.role === 'ADMIN') navigate('/dashboard/admin')
+              else if (user?.role === 'CHEF') navigate('/dashboard/chef')
+              else navigate('/dashboard/member')
+            }}
             className="text-gray-400 hover:text-white text-sm mb-4 flex items-center gap-2"
           >
             ← Retour au Dashboard
           </button>
-          <h1 className="text-xl font-bold">🚀 Agile Platform</h1>
+
+            
+          <h1 className="text-xl font-bold"> Agile Platform</h1>
           <div className="mt-3 flex items-center gap-2">
             <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-sm font-bold">
               {user?.name?.charAt(0)}

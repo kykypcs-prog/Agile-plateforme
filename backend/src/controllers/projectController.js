@@ -138,6 +138,18 @@ const getStats = async (req, res) => {
     const tasksInProgress = await prisma.task.count({ where: { status: 'IN_PROGRESS' } })
     const tasksDone = await prisma.task.count({ where: { status: 'DONE' } })
 
+    // Tâches par mois
+    const tasks = await prisma.task.findMany({
+      select: { createdAt: true }
+    })
+
+    // Grouper par mois
+    const months = ['Jan', 'Fev', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aou', 'Sep', 'Oct', 'Nov', 'Dec']
+    const tasksByMonth = months.map((month, index) => ({
+      name: month,
+      taches: tasks.filter(t => new Date(t.createdAt).getMonth() === index).length
+    }))
+
     res.json({
       totalProjects,
       totalUsers,
@@ -145,11 +157,13 @@ const getStats = async (req, res) => {
       totalSprints,
       tasksTodo,
       tasksInProgress,
-      tasksDone
+      tasksDone,
+      tasksByMonth
     })
   } catch (error) {
     res.status(500).json({ message: 'Erreur serveur', error })
   }
+
 }
 // Supprimer un membre d'un projet
 const removeMember = async (req, res) => {

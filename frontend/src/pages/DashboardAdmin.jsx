@@ -30,14 +30,7 @@ function DashboardAdmin() {
   ]
   const COLORS = ['#10b981', '#6366f1', '#e2e8f0']
 
-  const chartData = [
-    { name: 'Jan', taches: 4 },
-    { name: 'Fev', taches: 7 },
-    { name: 'Mar', taches: 5 },
-    { name: 'Avr', taches: 9 },
-    { name: 'Mai', taches: 6 },
-  ]
-
+ const chartData = stats.tasksByMonth || []
   useEffect(() => {
     fetchProjects()
     fetchUsers()
