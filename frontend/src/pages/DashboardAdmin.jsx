@@ -68,13 +68,16 @@ function DashboardAdmin() {
     }
   }
 
-  const handleAddMember = async () => {
-    try {
-      await addMember(selectedProject, selectedUser)
-      setShowMemberForm(false); setSelectedUser('')
-      fetchMembers(selectedProject)
-    } catch (err) { console.error(err) }
+const handleAddMember = async () => {
+  try {
+    await addMember(selectedProject, selectedUser)
+    setShowMemberForm(false)
+    setSelectedUser('')
+    fetchMembers(selectedProject)
+  } catch (err) {
+    alert(err.response?.data?.message || 'Erreur lors de l\'ajout du membre !')
   }
+}
 
   const handleRemoveMember = async (userId) => {
     if (window.confirm('Retirer ce membre ?')) {

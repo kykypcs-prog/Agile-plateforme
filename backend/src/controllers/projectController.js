@@ -71,28 +71,53 @@ const deleteProject = async (req, res) => {
   }
 }
 
-// Ajouter un membre à un projet
 const addMember = async (req, res) => {
   try {
     const { id } = req.params
     const { userId } = req.body
 
+    // Vérifier si le membre existe déjà
     const existing = await prisma.projectMember.findFirst({
-      where: {
-        projectId: parseInt(id),
-        userId: parseInt(userId)
-      }
+      where: { projectId: parseInt(id), userId: parseInt(userId) }
     })
-
     if (existing) {
       return res.status(400).json({ message: 'Membre déjà dans le projet !' })
     }
 
+    // Récupérer l'utilisateur à ajouter
+    const userToAdd = await prisma.user.findUnique({
+      where: { id: parseInt(userId) }
+    })
+
+    // Règle 1 : Pas d'Admin dans un projet
+    if (userToAdd.role === 'ADMIN') {
+      return res.status(400).json({ message: 'Un administrateur ne peut pas être ajouté à un projet !' })
+    }
+
+    // Récupérer les membres actuels du projet
+    const currentMembers = await prisma.projectMember.findMany({
+      where: { projectId: parseInt(id) },
+      include: { user: true }
+    })
+
+    // Règle 2 : Pas de 2 Chefs dans un projet
+    if (userToAdd.role === 'CHEF') {
+      const existingChef = currentMembers.find(m => m.user.role === 'CHEF')
+      if (existingChef) {
+        return res.status(400).json({ message: 'Ce projet a déjà un chef de projet !' })
+      }
+    }
+
+    // Règle 3 : Il faut d'abord un Chef avant d'ajouter un Membre
+    if (userToAdd.role === 'MEMBER') {
+      const hasChef = currentMembers.find(m => m.user.role === 'CHEF')
+      if (!hasChef) {
+        return res.status(400).json({ message: 'Vous devez d\'abord ajouter un chef de projet !' })
+      }
+    }
+
     const member = await prisma.projectMember.create({
-      data: {
-        projectId: parseInt(id),
-        userId: parseInt(userId)
-      },
+      data: { projectId: parseInt(id), userId: parseInt(userId) },
       include: { user: true }
     })
 

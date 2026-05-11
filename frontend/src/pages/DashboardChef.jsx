@@ -101,14 +101,16 @@ function DashboardChef() {
     }
   }
 
-  const handleAddMember = async () => {
-    try {
-      await addMember(selectedProjectMember, selectedUser)
-      setShowMemberForm(false); setSelectedUser('')
-      fetchMembers(selectedProjectMember)
-    } catch (err) { console.error(err) }
+ const handleAddMember = async () => {
+  try {
+    await addMember(selectedProjectMember, selectedUser)
+    setShowMemberForm(false)
+    setSelectedUser('')
+    fetchMembers(selectedProjectMember)
+  } catch (err) {
+    alert(err.response?.data?.message || 'Erreur lors de l\'ajout du membre !')
   }
-
+}
   const handleRemoveMember = async (userId) => {
     if (window.confirm('Retirer ce membre ?')) {
       try { await removeMember(selectedProjectMember, userId); fetchMembers(selectedProjectMember) } catch (err) { console.error(err) }
