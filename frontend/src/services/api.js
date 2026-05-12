@@ -37,7 +37,10 @@ export const updateUserRole = (id, role) => API.put(`/projects/users/${id}/role`
 // Sprints
 export const getSprints = (projectId) => API.get(`/sprints/${projectId}`)
 export const createSprint = (data) => API.post('/sprints', data)
+export const updateSprint = (id, data) => API.put(`/sprints/${id}`, data)
 export const deleteSprint = (id) => API.delete(`/sprints/${id}`)
+export const updateSprintStatus = (id, status) => API.put(`/sprints/${id}/status`, { status })
+export const getSprintProgress = (id) => API.get(`/sprints/${id}/progress`)
 export const getBurndown = (sprintId) => API.get(`/sprints/burndown/${sprintId}`)
 
 // Tâches
@@ -45,5 +48,14 @@ export const getTasks = (sprintId) => API.get(`/tasks/${sprintId}`)
 export const createTask = (data) => API.post('/tasks', data)
 export const updateTask = (id, data) => API.put(`/tasks/${id}`, data)
 export const deleteTask = (id) => API.delete(`/tasks/${id}`)
+
+// Notifications
+export const getNotifications = () => API.get('/notifications')
+export const markAsRead = (id) => API.put(`/notifications/${id}/read`)
+export const markAllAsRead = () => API.put('/notifications/read-all')
+
+// Historique
+export const getAllHistory = () => API.get('/history')
+export const getProjectHistory = (id) => API.get(`/history/${id}`)
 
 export default API
