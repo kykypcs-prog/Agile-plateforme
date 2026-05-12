@@ -6,6 +6,8 @@ const authRoutes = require('./src/routes/authRoutes')
 const projectRoutes = require('./src/routes/projectRoutes')
 const sprintRoutes = require('./src/routes/sprintRoutes')
 const taskRoutes = require('./src/routes/taskRoutes')
+const notificationRoutes = require('./src/routes/notificationRoutes')
+const historyRoutes = require('./src/routes/historyRoutes')
 
 const app = express()
 const PORT = process.env.PORT || 5000
@@ -19,6 +21,8 @@ app.use('/api/auth', authRoutes)
 app.use('/api/projects', projectRoutes)
 app.use('/api/sprints', sprintRoutes)
 app.use('/api/tasks', taskRoutes)
+app.use('/api/notifications', notificationRoutes)
+app.use('/api/history', historyRoutes)
 
 app.get('/', (req, res) => {
   res.json({ message: 'API Agile Platform fonctionne !' })

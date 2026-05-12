@@ -8,23 +8,26 @@ datasource db {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  name      String
-  email     String   @unique
-  password  String
-  role      Role     @default(MEMBER)
-  createdAt DateTime @default(now())
-  projects  ProjectMember[]
-  tasks     Task[]
+  id            Int             @id @default(autoincrement())
+  name          String
+  email         String          @unique
+  password      String
+  role          Role            @default(MEMBER)
+  createdAt     DateTime        @default(now())
+  projects      ProjectMember[]
+  tasks         Task[]
+  notifications Notification[]
+  history       History[]
 }
 
 model Project {
-  id          Int       @id @default(autoincrement())
+  id          Int             @id @default(autoincrement())
   name        String
   description String?
-  createdAt   DateTime  @default(now())
+  createdAt   DateTime        @default(now())
   members     ProjectMember[]
   sprints     Sprint[]
+  history     History[]
 }
 
 model ProjectMember {
@@ -32,16 +35,17 @@ model ProjectMember {
   userId    Int
   projectId Int
   user      User    @relation(fields: [userId], references: [id])
-  project   Project @relation(fields: [projectId], references: [id])
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
 }
 
 model Sprint {
-  id        Int      @id @default(autoincrement())
+  id        Int          @id @default(autoincrement())
   name      String
   startDate DateTime
   endDate   DateTime
+  status    SprintStatus @default(A_VENIR)
   projectId Int
-  project   Project  @relation(fields: [projectId], references: [id])
+  project   Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
   tasks     Task[]
 }
 
@@ -50,11 +54,31 @@ model Task {
   title       String
   description String?
   status      TaskStatus @default(TODO)
+  priority    Priority   @default(MOYENNE)
   sprintId    Int
   userId      Int?
-  sprint      Sprint     @relation(fields: [sprintId], references: [id])
+  sprint      Sprint     @relation(fields: [sprintId], references: [id], onDelete: Cascade)
   assignee    User?      @relation(fields: [userId], references: [id])
   createdAt   DateTime   @default(now())
+}
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  message   String
+  read      Boolean  @default(false)
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model History {
+  id        Int      @id @default(autoincrement())
+  action    String
+  userId    Int
+  projectId Int?
+  user      User     @relation(fields: [userId], references: [id])
+  project   Project? @relation(fields: [projectId], references: [id])
+  createdAt DateTime @default(now())
 }
 
 enum Role {
@@ -67,4 +91,16 @@ enum TaskStatus {
   TODO
   IN_PROGRESS
   DONE
+}
+
+enum SprintStatus {
+  A_VENIR
+  EN_COURS
+  TERMINE
+}
+
+enum Priority {
+  HAUTE
+  MOYENNE
+  BASSE
 }

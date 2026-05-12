@@ -1,13 +1,17 @@
 const { PrismaClient } = require('@prisma/client')
 const prisma = new PrismaClient()
+const { createNotification } = require('./notificationController')
+const { createHistory } = require('./historyController')
 
 // Créer un projet
 const createProject = async (req, res) => {
   try {
     const { name, description } = req.body
-    const project = await prisma.project.create({
-      data: { name, description }
-    })
+    const project = await prisma.project.create({ data: { name, description } })
+
+    // Historique
+    await createHistory(req.user.id, `A créé le projet "${name}"`, project.id)
+
     res.status(201).json({ message: 'Projet créé avec succès !', project })
   } catch (error) {
     res.status(500).json({ message: 'Erreur serveur', error })
@@ -34,9 +38,7 @@ const getProject = async (req, res) => {
       where: { id: parseInt(id) },
       include: { members: true, sprints: true }
     })
-    if (!project) {
-      return res.status(404).json({ message: 'Projet non trouvé !' })
-    }
+    if (!project) return res.status(404).json({ message: 'Projet non trouvé !' })
     res.json(project)
   } catch (error) {
     res.status(500).json({ message: 'Erreur serveur', error })
@@ -62,64 +64,65 @@ const updateProject = async (req, res) => {
 const deleteProject = async (req, res) => {
   try {
     const { id } = req.params
-    await prisma.project.delete({
-      where: { id: parseInt(id) }
-    })
+
+    const sprints = await prisma.sprint.findMany({ where: { projectId: parseInt(id) } })
+    for (const sprint of sprints) {
+      await prisma.task.deleteMany({ where: { sprintId: sprint.id } })
+    }
+    await prisma.sprint.deleteMany({ where: { projectId: parseInt(id) } })
+    await prisma.projectMember.deleteMany({ where: { projectId: parseInt(id) } })
+    await prisma.history.deleteMany({ where: { projectId: parseInt(id) } })
+    await prisma.project.delete({ where: { id: parseInt(id) } })
+
     res.json({ message: 'Projet supprimé avec succès !' })
   } catch (error) {
     res.status(500).json({ message: 'Erreur serveur', error })
   }
 }
 
+// Ajouter un membre
 const addMember = async (req, res) => {
   try {
     const { id } = req.params
     const { userId } = req.body
 
-    // Vérifier si le membre existe déjà
     const existing = await prisma.projectMember.findFirst({
       where: { projectId: parseInt(id), userId: parseInt(userId) }
     })
-    if (existing) {
-      return res.status(400).json({ message: 'Membre déjà dans le projet !' })
-    }
+    if (existing) return res.status(400).json({ message: 'Membre déjà dans le projet !' })
 
-    // Récupérer l'utilisateur à ajouter
-    const userToAdd = await prisma.user.findUnique({
-      where: { id: parseInt(userId) }
-    })
+    const userToAdd = await prisma.user.findUnique({ where: { id: parseInt(userId) } })
 
-    // Règle 1 : Pas d'Admin dans un projet
     if (userToAdd.role === 'ADMIN') {
       return res.status(400).json({ message: 'Un administrateur ne peut pas être ajouté à un projet !' })
     }
 
-    // Récupérer les membres actuels du projet
     const currentMembers = await prisma.projectMember.findMany({
       where: { projectId: parseInt(id) },
       include: { user: true }
     })
 
-    // Règle 2 : Pas de 2 Chefs dans un projet
     if (userToAdd.role === 'CHEF') {
       const existingChef = currentMembers.find(m => m.user.role === 'CHEF')
-      if (existingChef) {
-        return res.status(400).json({ message: 'Ce projet a déjà un chef de projet !' })
-      }
+      if (existingChef) return res.status(400).json({ message: 'Ce projet a déjà un chef de projet !' })
     }
 
-    // Règle 3 : Il faut d'abord un Chef avant d'ajouter un Membre
     if (userToAdd.role === 'MEMBER') {
       const hasChef = currentMembers.find(m => m.user.role === 'CHEF')
-      if (!hasChef) {
-        return res.status(400).json({ message: 'Vous devez d\'abord ajouter un chef de projet !' })
-      }
+      if (!hasChef) return res.status(400).json({ message: 'Vous devez d\'abord ajouter un chef de projet !' })
     }
 
     const member = await prisma.projectMember.create({
       data: { projectId: parseInt(id), userId: parseInt(userId) },
       include: { user: true }
     })
+
+    // Notification au membre ajouté
+    const project = await prisma.project.findUnique({ where: { id: parseInt(id) } })
+    await createNotification(userId, `Vous avez été ajouté au projet "${project.name}"`)
+
+    // Historique
+    await createHistory(req.user.id, `A ajouté ${userToAdd.name} au projet`, parseInt(id))
 
     res.status(201).json({ message: 'Membre ajouté avec succès !', member })
   } catch (error) {
@@ -152,6 +155,7 @@ const getUsers = async (req, res) => {
     res.status(500).json({ message: 'Erreur serveur', error })
   }
 }
+
 // Statistiques
 const getStats = async (req, res) => {
   try {
@@ -163,12 +167,7 @@ const getStats = async (req, res) => {
     const tasksInProgress = await prisma.task.count({ where: { status: 'IN_PROGRESS' } })
     const tasksDone = await prisma.task.count({ where: { status: 'DONE' } })
 
-    // Tâches par mois
-    const tasks = await prisma.task.findMany({
-      select: { createdAt: true }
-    })
-
-    // Grouper par mois
+    const tasks = await prisma.task.findMany({ select: { createdAt: true } })
     const months = ['Jan', 'Fev', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aou', 'Sep', 'Oct', 'Nov', 'Dec']
     const tasksByMonth = months.map((month, index) => ({
       name: month,
@@ -176,47 +175,61 @@ const getStats = async (req, res) => {
     }))
 
     res.json({
-      totalProjects,
-      totalUsers,
-      totalTasks,
-      totalSprints,
-      tasksTodo,
-      tasksInProgress,
-      tasksDone,
-      tasksByMonth
+      totalProjects, totalUsers, totalTasks, totalSprints,
+      tasksTodo, tasksInProgress, tasksDone, tasksByMonth
     })
   } catch (error) {
     res.status(500).json({ message: 'Erreur serveur', error })
   }
-
 }
-// Supprimer un membre d'un projet
+
+// Supprimer un membre
 const removeMember = async (req, res) => {
   try {
     const { id, userId } = req.params
-    await prisma.projectMember.deleteMany({
+
+    // Vérifier si le membre a des tâches en cours
+    const tasksInProgress = await prisma.task.findFirst({
       where: {
-        projectId: parseInt(id),
-        userId: parseInt(userId)
+        userId: parseInt(userId),
+        status: 'IN_PROGRESS',
+        sprint: { projectId: parseInt(id) }
       }
     })
+    if (tasksInProgress) {
+      return res.status(400).json({ message: 'Ce membre a des tâches en cours !' })
+    }
+
+    // Vérifier si c'est un chef avec des sprints actifs
+    const userToRemove = await prisma.user.findUnique({ where: { id: parseInt(userId) } })
+    if (userToRemove.role === 'CHEF') {
+      const activeSprint = await prisma.sprint.findFirst({
+        where: { projectId: parseInt(id), status: 'EN_COURS' }
+      })
+      if (activeSprint) {
+        return res.status(400).json({ message: 'Le chef ne peut pas être retiré avec un sprint actif !' })
+      }
+    }
+
+    await prisma.projectMember.deleteMany({
+      where: { projectId: parseInt(id), userId: parseInt(userId) }
+    })
+
+    // Historique
+    await createHistory(req.user.id, `A retiré ${userToRemove.name} du projet`, parseInt(id))
+
     res.json({ message: 'Membre supprimé avec succès !' })
   } catch (error) {
     res.status(500).json({ message: 'Erreur serveur', error })
   }
 }
+
 // Récupérer les projets d'un utilisateur
 const getMyProjects = async (req, res) => {
   try {
     const userId = req.user.id
     const projects = await prisma.project.findMany({
-      where: {
-        members: {
-          some: {
-            userId: parseInt(userId)
-          }
-        }
-      },
+      where: { members: { some: { userId: parseInt(userId) } } },
       include: { members: true, sprints: true }
     })
     res.json(projects)
@@ -224,6 +237,7 @@ const getMyProjects = async (req, res) => {
     res.status(500).json({ message: 'Erreur serveur', error })
   }
 }
+
 // Changer le rôle d'un utilisateur
 const updateUserRole = async (req, res) => {
   try {
@@ -240,16 +254,6 @@ const updateUserRole = async (req, res) => {
 }
 
 module.exports = { 
-  createProject, 
-  getProjects, 
-  getProject, 
-  updateProject, 
-  deleteProject, 
-  addMember, 
-  getMembers, 
-  getUsers,
-  getStats,
-  removeMember,
-  getMyProjects,
-  updateUserRole
+  createProject, getProjects, getProject, updateProject, deleteProject, 
+  addMember, getMembers, getUsers, getStats, removeMember, getMyProjects, updateUserRole
 }
