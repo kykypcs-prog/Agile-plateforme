@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { getSprints, createSprint, deleteSprint, getMembers, addMember, getUsers, removeMember, getTasks, createTask, updateTask, deleteTask } from '../services/api'
+import { getSprints, createSprint, deleteSprint, getMembers, addMember, getUsers, removeMember, getTasks, createTask, updateTask, deleteTask, updateSprintStatus } from '../services/api'
+
 
 function ProjectDetail() {
   const { id } = useParams()
@@ -82,6 +83,16 @@ function ProjectDetail() {
       }
     }
   }
+
+  const handleUpdateSprintStatus = async (sprintId, status) => {
+  try {
+    await updateSprintStatus(sprintId, status)
+    fetchSprints()
+  } catch (err) {
+    alert(err.response?.data?.message || 'Erreur !')
+  }
+}
+
 
   const handleAddMember = async () => {
     try {
@@ -213,86 +224,112 @@ function ProjectDetail() {
         <div className="p-8">
 
           {/* Sprints */}
-          {activePage === 'sprints' && (
-            <div>
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-lg font-bold text-gray-800">🏃 Sprints du projet</h3>
-                {(user?.role === 'ADMIN' || user?.role === 'CHEF') && (
+{activePage === 'sprints' && (
+  <div>
+    <div className="flex justify-between items-center mb-6">
+      <h3 className="text-lg font-bold text-gray-800">🏃 Sprints du projet</h3>
+      {(user?.role === 'ADMIN' || user?.role === 'CHEF') && (
+        <button
+          onClick={() => setShowSprintForm(!showSprintForm)}
+          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
+        >
+          + Nouveau Sprint
+        </button>
+      )}
+    </div>
+
+    {showSprintForm && (
+      <div className="bg-white rounded-xl p-6 shadow-sm mb-6">
+        <h3 className="font-bold text-gray-700 mb-4">Nouveau Sprint</h3>
+        <input
+          type="text"
+          placeholder="Nom du sprint"
+          className="w-full border border-gray-300 rounded-lg px-4 py-2 mb-3 focus:outline-none focus:border-blue-500"
+          onChange={(e) => setSprintForm({ ...sprintForm, name: e.target.value })}
+        />
+        <div className="grid grid-cols-2 gap-3 mb-3">
+          <div>
+            <label className="text-sm text-gray-600 mb-1 block">Date début</label>
+            <input
+              type="date"
+              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:border-blue-500"
+              onChange={(e) => setSprintForm({ ...sprintForm, startDate: e.target.value })}
+            />
+          </div>
+          <div>
+            <label className="text-sm text-gray-600 mb-1 block">Date fin</label>
+            <input
+              type="date"
+              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:border-blue-500"
+              onChange={(e) => setSprintForm({ ...sprintForm, endDate: e.target.value })}
+            />
+          </div>
+        </div>
+        <div className="flex gap-3">
+          <button onClick={handleCreateSprint} className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">Créer</button>
+          <button onClick={() => setShowSprintForm(false)} className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 transition">Annuler</button>
+        </div>
+      </div>
+    )}
+
+    {sprints.length === 0 ? (
+      <div className="bg-white rounded-xl p-12 shadow-sm text-center text-gray-400">
+        <p className="text-5xl mb-4">🏃</p>
+        <p>Aucun sprint pour ce projet</p>
+      </div>
+    ) : (
+      <div className="grid grid-cols-3 gap-4">
+        {sprints.map((sprint) => (
+          <div key={sprint.id} className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition">
+            <div className="flex justify-between items-start mb-3">
+              <h3 className="font-bold text-gray-800">{sprint.name}</h3>
+              <span className={`text-xs px-2 py-1 rounded-full border font-medium ${
+                sprint.status === 'EN_COURS' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
+                sprint.status === 'TERMINE' ? 'bg-gray-50 text-gray-400 border-gray-100' :
+                'bg-indigo-50 text-indigo-600 border-indigo-100'
+              }`}>
+                {sprint.status === 'EN_COURS' ? '🟢 En cours' :
+                 sprint.status === 'TERMINE' ? '⚫ Terminé' :
+                 '🔵 À venir'}
+              </span>
+            </div>
+            <p className="text-gray-500 text-sm">📅 Début : {new Date(sprint.startDate).toLocaleDateString()}</p>
+            <p className="text-gray-500 text-sm">📅 Fin : {new Date(sprint.endDate).toLocaleDateString()}</p>
+            <div className="flex justify-between items-center mt-4">
+              <span className="text-xs text-gray-400">{sprint.tasks?.length} tâche(s)</span>
+              <div className="flex items-center gap-2">
+                {user?.role === 'CHEF' && sprint.status === 'A_VENIR' && (
                   <button
-                    onClick={() => setShowSprintForm(!showSprintForm)}
-                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
+                    onClick={() => handleUpdateSprintStatus(sprint.id, 'EN_COURS')}
+                    className="text-xs bg-emerald-100 text-emerald-600 px-2 py-1 rounded-lg hover:bg-emerald-200 transition"
                   >
-                    + Nouveau Sprint
+                    ▶ Démarrer
+                  </button>
+                )}
+                {user?.role === 'CHEF' && sprint.status === 'EN_COURS' && (
+                  <button
+                    onClick={() => handleUpdateSprintStatus(sprint.id, 'TERMINE')}
+                    className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-lg hover:bg-gray-200 transition"
+                  >
+                    ⏹ Terminer
+                  </button>
+                )}
+                {(user?.role === 'ADMIN' || user?.role === 'CHEF') && sprint.status !== 'EN_COURS' && (
+                  <button
+                    onClick={() => handleDeleteSprint(sprint.id)}
+                    className="text-red-500 text-sm hover:underline"
+                  >
+                    🗑️
                   </button>
                 )}
               </div>
-
-              {showSprintForm && (
-                <div className="bg-white rounded-xl p-6 shadow-sm mb-6">
-                  <h3 className="font-bold text-gray-700 mb-4">Nouveau Sprint</h3>
-                  <input
-                    type="text"
-                    placeholder="Nom du sprint"
-                    className="w-full border border-gray-300 rounded-lg px-4 py-2 mb-3 focus:outline-none focus:border-blue-500"
-                    onChange={(e) => setSprintForm({ ...sprintForm, name: e.target.value })}
-                  />
-                  <div className="grid grid-cols-2 gap-3 mb-3">
-                    <div>
-                      <label className="text-sm text-gray-600 mb-1 block">Date début</label>
-                      <input
-                        type="date"
-                        className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:border-blue-500"
-                        onChange={(e) => setSprintForm({ ...sprintForm, startDate: e.target.value })}
-                      />
-                    </div>
-                    <div>
-                      <label className="text-sm text-gray-600 mb-1 block">Date fin</label>
-                      <input
-                        type="date"
-                        className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:border-blue-500"
-                        onChange={(e) => setSprintForm({ ...sprintForm, endDate: e.target.value })}
-                      />
-                    </div>
-                  </div>
-                  <div className="flex gap-3">
-                    <button onClick={handleCreateSprint} className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">Créer</button>
-                    <button onClick={() => setShowSprintForm(false)} className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 transition">Annuler</button>
-                  </div>
-                </div>
-              )}
-
-              {sprints.length === 0 ? (
-                <div className="bg-white rounded-xl p-12 shadow-sm text-center text-gray-400">
-                  <p className="text-5xl mb-4">🏃</p>
-                  <p>Aucun sprint pour ce projet</p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-3 gap-4">
-                  {sprints.map((sprint) => (
-                    <div key={sprint.id} className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition">
-                      <div className="flex justify-between items-start mb-3">
-                        <h3 className="font-bold text-gray-800">{sprint.name}</h3>
-                        <span className="bg-blue-100 text-blue-600 text-xs px-2 py-1 rounded-full">Actif</span>
-                      </div>
-                      <p className="text-gray-500 text-sm">📅 Début : {new Date(sprint.startDate).toLocaleDateString()}</p>
-                      <p className="text-gray-500 text-sm">📅 Fin : {new Date(sprint.endDate).toLocaleDateString()}</p>
-                      <div className="flex justify-between items-center mt-4">
-                        <span className="text-xs text-gray-400">{sprint.tasks?.length} tâche(s)</span>
-                        {(user?.role === 'ADMIN' || user?.role === 'CHEF') && (
-                          <button
-                            onClick={() => handleDeleteSprint(sprint.id)}
-                            className="text-red-500 text-sm hover:underline"
-                          >
-                            🗑️ Supprimer
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
             </div>
-          )}
+          </div>
+        ))}
+      </div>
+    )}
+  </div>
+)}
 
           {/* Kanban */}
           {activePage === 'kanban' && (

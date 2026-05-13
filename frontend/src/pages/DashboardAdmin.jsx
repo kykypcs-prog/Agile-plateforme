@@ -4,6 +4,9 @@ import { getProjects, createProject, deleteProject, getUsers, getStats, addMembe
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 import { LayoutDashboard, FolderKanban, Users, BarChart2, LogOut, Timer, ChevronRight, Trash2, Plus, X } from 'lucide-react'
 import BurndownChart from '../components/BurndownChart'
+import Notifications from '../components/Notifications'
+import HistoryLog from '../components/HistoryLog'
+
 
 function DashboardAdmin() {
   const navigate = useNavigate()
@@ -62,11 +65,21 @@ function DashboardAdmin() {
     } catch (err) { console.error(err) }
   }
 
-  const handleDeleteProject = async (id) => {
-    if (window.confirm('Supprimer ce projet ?')) {
-      try { await deleteProject(id); fetchProjects(); fetchStats() } catch (err) { console.error(err) }
+ const handleDeleteProject = async (id) => {
+  if (window.confirm('Supprimer ce projet ?')) {
+    try {
+      await deleteProject(id)
+      fetchProjects()
+      fetchStats()
+      setSprints([])
+      setSelectedProject('')
+      setSelectedProjectSprint('')
+      setMembers([])
+    } catch (err) {
+      console.error(err)
     }
   }
+}
 
 const handleAddMember = async () => {
   try {
@@ -171,20 +184,24 @@ const handleAddMember = async () => {
       {/* Main */}
       <div className="flex-1 ml-60">
 
+        
+
         {/* Header */}
-        <div className="bg-white border-b border-gray-100 px-8 py-4 flex justify-between items-center sticky top-0 z-10">
-          <div>
-            <h1 className="text-lg font-semibold text-gray-900">
-              {menuItems.find(m => m.id === activePage)?.label}
-            </h1>
-            <p className="text-xs text-gray-400">Tableau de bord administrateur</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="bg-rose-50 text-rose-600 px-3 py-1 rounded-full text-xs font-medium border border-rose-100">
-              👑 Administrateur
-            </span>
-          </div>
-        </div>
+<div className="bg-white border-b border-gray-100 px-8 py-4 flex justify-between items-center sticky top-0 z-10">
+  <div>
+    <h1 className="text-lg font-semibold text-gray-900">
+      {menuItems.find(m => m.id === activePage)?.label}
+    </h1>
+    <p className="text-xs text-gray-400">Tableau de bord administrateur</p>
+  </div>
+  <div className="flex items-center gap-3">
+    <Notifications />
+    <span className="bg-rose-50 text-rose-600 px-3 py-1 rounded-full text-xs font-medium border border-rose-100">
+      👑 Administrateur
+    </span>
+  </div>
+</div>
+      
 
         <div className="p-8">
 
@@ -584,6 +601,7 @@ const handleAddMember = async () => {
                   <div key={i} className={`bg-white rounded-2xl p-6 border ${stat.border} shadow-sm`}>
                     <p className="text-xs text-gray-500 font-medium mb-1">{stat.label}</p>
                     <p className={`text-3xl font-bold ${stat.color}`}>{stat.value}</p>
+                    <HistoryLog showAll={true} />
                     {/* Burndown */}
 <BurndownChart projects={projects} />
                   </div>

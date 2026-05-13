@@ -65,6 +65,18 @@ const deleteProject = async (req, res) => {
   try {
     const { id } = req.params
 
+    const project = await prisma.project.findUnique({ where: { id: parseInt(id) } })
+
+    // Récupérer tous les membres avant suppression
+    const members = await prisma.projectMember.findMany({
+      where: { projectId: parseInt(id) }
+    })
+
+    // Notifier tous les membres
+    for (const member of members) {
+      await createNotification(member.userId, `Le projet "${project.name}" a été supprimé !`)
+    }
+
     const sprints = await prisma.sprint.findMany({ where: { projectId: parseInt(id) } })
     for (const sprint of sprints) {
       await prisma.task.deleteMany({ where: { sprintId: sprint.id } })
@@ -120,7 +132,7 @@ const addMember = async (req, res) => {
     // Notification au membre ajouté
     const project = await prisma.project.findUnique({ where: { id: parseInt(id) } })
     await createNotification(userId, `Vous avez été ajouté au projet "${project.name}"`)
-
+    
     // Historique
     await createHistory(req.user.id, `A ajouté ${userToAdd.name} au projet`, parseInt(id))
 
@@ -200,6 +212,9 @@ const removeMember = async (req, res) => {
       return res.status(400).json({ message: 'Ce membre a des tâches en cours !' })
     }
 
+    // Notifier le membre retiré
+    await createNotification(parseInt(userId), `Vous avez été retiré du projet !`)
+
     // Vérifier si c'est un chef avec des sprints actifs
     const userToRemove = await prisma.user.findUnique({ where: { id: parseInt(userId) } })
     if (userToRemove.role === 'CHEF') {
@@ -238,22 +253,46 @@ const getMyProjects = async (req, res) => {
   }
 }
 
-// Changer le rôle d'un utilisateur
+// Mettre à jour le rôle d'un utilisateur
 const updateUserRole = async (req, res) => {
   try {
     const { id } = req.params
     const { role } = req.body
+
     const user = await prisma.user.update({
       where: { id: parseInt(id) },
       data: { role }
     })
-    res.json({ message: 'Rôle modifié avec succès !', user })
+
+    // Notifier l'utilisateur
+    await createNotification(
+      parseInt(id),
+      `Votre rôle a été changé en ${role} !`
+    )
+
+    res.json({
+      message: 'Rôle modifié avec succès !',
+      user
+    })
   } catch (error) {
-    res.status(500).json({ message: 'Erreur serveur', error })
+    res.status(500).json({
+      message: 'Erreur serveur',
+      error
+    })
   }
 }
 
 module.exports = { 
-  createProject, getProjects, getProject, updateProject, deleteProject, 
-  addMember, getMembers, getUsers, getStats, removeMember, getMyProjects, updateUserRole
+  createProject,
+  getProjects,
+  getProject,
+  updateProject,
+  deleteProject, 
+  addMember, 
+  getMembers,
+  getUsers,
+  getStats,
+  removeMember,
+  getMyProjects,
+  updateUserRole,
 }

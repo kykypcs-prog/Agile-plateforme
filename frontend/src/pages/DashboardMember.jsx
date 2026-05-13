@@ -4,6 +4,8 @@ import { getMyProjects, getTasks, getSprints, getMembers, updateTask } from '../
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
 import { LayoutDashboard, FolderKanban, Users, LogOut, Timer, ChevronRight, Kanban, ClipboardList } from 'lucide-react'
 import BurndownChart from '../components/BurndownChart'
+import Notifications from '../components/Notifications'
+import HistoryLog from '../components/HistoryLog'
 
 function DashboardMember() {
   const navigate = useNavigate()
@@ -147,11 +149,12 @@ function DashboardMember() {
             </h1>
             <p className="text-xs text-gray-400">Tableau de bord membre</p>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="bg-emerald-50 text-emerald-600 px-3 py-1 rounded-full text-xs font-medium border border-emerald-100">
-              👨‍💻 Membre
-            </span>
-          </div>
+         <div className="flex items-center gap-3">
+  <Notifications />
+  <span className="bg-emerald-50 text-emerald-600 px-3 py-1 rounded-full text-xs font-medium border border-emerald-100">
+    👨‍💻 Membre
+  </span>
+</div>
         </div>
 
         <div className="p-8">
@@ -168,6 +171,7 @@ function DashboardMember() {
                   <div key={i} className={`bg-white rounded-2xl p-5 border ${stat.border} shadow-sm`}>
                     <p className="text-xs text-gray-500 font-medium mb-1">{stat.label}</p>
                     <p className={`text-3xl font-bold ${stat.color}`}>{stat.value}</p>
+                    <HistoryLog showAll={false} projectId={projects[0]?.id} />
                         {/* Burndown */}
 <BurndownChart projects={projects} />
                   </div>

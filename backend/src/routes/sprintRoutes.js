@@ -12,11 +12,11 @@ const {
 const { verifyToken } = require('../middlewares/authMiddleware')
 
 router.post('/', verifyToken, createSprint)
+router.get('/burndown/:id', verifyToken, getBurndown)
+router.get('/progress/:id', verifyToken, getSprintProgress)
 router.get('/:projectId', verifyToken, getSprints)
+router.put('/:id/status', verifyToken, updateSprintStatus)
 router.put('/:id', verifyToken, updateSprint)
 router.delete('/:id', verifyToken, deleteSprint)
-router.get('/burndown/:id', verifyToken, getBurndown)
-router.put('/:id/status', verifyToken, updateSprintStatus)
-router.get('/:id/progress', verifyToken, getSprintProgress)
 
 module.exports = router

@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getProjects, createProject, deleteProject, getSprints, createSprint, deleteSprint, getUsers, addMember, getMembers, removeMember, getStats, getTasks, createTask, updateTask, deleteTask } from '../services/api'
+import { getProjects, createProject, deleteProject, getSprints, createSprint, deleteSprint, getUsers, addMember, getMembers, removeMember, getStats, getTasks, createTask, updateTask, deleteTask, updateSprintStatus } from '../services/api'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 import { LayoutDashboard, FolderKanban, Users, LogOut, Timer, ChevronRight, Trash2, Plus, X, Kanban } from 'lucide-react'
 import BurndownChart from '../components/BurndownChart'
+import Notifications from '../components/Notifications'
+import HistoryLog from '../components/HistoryLog'
+
 
 function DashboardChef() {
   const navigate = useNavigate()
@@ -82,10 +85,22 @@ function DashboardChef() {
   }
 
   const handleDeleteProject = async (id) => {
-    if (window.confirm('Supprimer ce projet ?')) {
-      try { await deleteProject(id); fetchProjects(); fetchStats() } catch (err) { console.error(err) }
+  if (window.confirm('Supprimer ce projet ?')) {
+    try {
+      await deleteProject(id)
+      fetchProjects()
+      fetchStats()
+      // Réinitialiser les sprints et tâches
+      setSprints([])
+      setTasks([])
+      setSelectedProjectSprint('')
+      setSelectedProjectKanban('')
+      setSelectedSprint('')
+    } catch (err) {
+      console.error(err)
     }
   }
+}
 
   const handleCreateSprint = async () => {
     try {
@@ -100,6 +115,15 @@ function DashboardChef() {
       try { await deleteSprint(sprintId); fetchSprints(selectedProjectSprint) } catch (err) { console.error(err) }
     }
   }
+
+  const handleUpdateSprintStatus = async (sprintId, status) => {
+  try {
+    await updateSprintStatus(sprintId, status)
+    fetchSprints(selectedProjectSprint)
+  } catch (err) {
+    alert(err.response?.data?.message || 'Erreur !')
+  }
+}
 
  const handleAddMember = async () => {
   try {
@@ -203,19 +227,14 @@ function DashboardChef() {
       <div className="flex-1 ml-60">
 
         {/* Header */}
-        <div className="bg-white border-b border-gray-100 px-8 py-4 flex justify-between items-center sticky top-0 z-10">
-          <div>
-            <h1 className="text-lg font-semibold text-gray-900">
-              {menuItems.find(m => m.id === activePage)?.label}
-            </h1>
-            <p className="text-xs text-gray-400">Tableau de bord chef de projet</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="bg-indigo-50 text-indigo-600 px-3 py-1 rounded-full text-xs font-medium border border-indigo-100">
-              👔 Chef de projet
-            </span>
-          </div>
-        </div>
+          <div className="flex items-center gap-3">
+  <Notifications />
+  <span className="bg-indigo-50 text-indigo-600 px-3 py-1 rounded-full text-xs font-medium border border-indigo-100">
+    👔 Chef de projet
+  </span>
+</div>
+
+     
 
         <div className="p-8">
 
@@ -232,6 +251,7 @@ function DashboardChef() {
                   <div key={i} className={`bg-white rounded-2xl p-5 border ${stat.border} shadow-sm`}>
                     <p className="text-xs text-gray-500 font-medium mb-1">{stat.label}</p>
                     <p className={`text-3xl font-bold ${stat.color}`}>{stat.value}</p>
+                    <HistoryLog showAll={false} projectId={projects[0]?.id} />
                     {/* Burndown */}
 <BurndownChart projects={projects} />
                   </div>

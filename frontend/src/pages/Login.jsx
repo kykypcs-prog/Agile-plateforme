@@ -8,6 +8,9 @@ function Login() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
+
+  // Sauvegarder la date de connexion
+localStorage.setItem('lastLogin', new Date().toISOString())
   const handleSubmit = async () => {
     setLoading(true)
     try {

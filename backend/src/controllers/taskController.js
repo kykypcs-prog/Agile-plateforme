@@ -116,6 +116,11 @@ const deleteTask = async (req, res) => {
 
     await prisma.task.delete({ where: { id: parseInt(id) } })
 
+     // Notifier la personne assignée
+if (task.userId) {
+  await createNotification(task.userId, `La tâche "${task.title}" a été supprimée !`)
+}
+
     // Historique
     await createHistory(req.user.id, `A supprimé la tâche "${task.title}"`, task.sprint.projectId)
 

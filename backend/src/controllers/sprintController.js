@@ -96,6 +96,9 @@ const deleteSprint = async (req, res) => {
     const { id } = req.params
 
     const sprint = await prisma.sprint.findUnique({ where: { id: parseInt(id) } })
+    if (!sprint) {
+      return res.status(404).json({ message: 'Sprint non trouvé !' })
+    }
 
     // Supprimer les tâches du sprint
     await prisma.task.deleteMany({ where: { sprintId: parseInt(id) } })
@@ -103,6 +106,14 @@ const deleteSprint = async (req, res) => {
 
     // Historique
     await createHistory(req.user.id, `A supprimé le sprint "${sprint.name}"`, sprint.projectId)
+
+    // Notifier les membres du projet
+    const members = await prisma.projectMember.findMany({
+      where: { projectId: sprint.projectId }
+    })
+    for (const member of members) {
+      await createNotification(member.userId, `Le sprint "${sprint.name}" a été supprimé !`)
+    }
 
     res.json({ message: 'Sprint supprimé avec succès !' })
   } catch (error) {
@@ -117,6 +128,9 @@ const updateSprintStatus = async (req, res) => {
     const { status } = req.body
 
     const sprint = await prisma.sprint.findUnique({ where: { id: parseInt(id) } })
+    if (!sprint) {
+      return res.status(404).json({ message: 'Sprint non trouvé !' })
+    }
 
     if (status === 'EN_COURS') {
       const activeSprint = await prisma.sprint.findFirst({
@@ -161,6 +175,9 @@ const getSprintProgress = async (req, res) => {
       where: { id: parseInt(id) },
       include: { tasks: true }
     })
+    if (!sprint) {
+      return res.status(404).json({ message: 'Sprint non trouvé !' })
+    }
 
     const totalTasks = sprint.tasks.length
     const doneTasks = sprint.tasks.filter(t => t.status === 'DONE').length
