@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getProjects, createProject, deleteProject, getUsers, getStats, addMember, getMembers, removeMember, updateUserRole, getSprints, createSprint, deleteSprint } from '../services/api'
+import { getProjects, createProject, deleteProject, getUsers, getStats, addMember, getMembers, removeMember, updateUserRole, getSprints, createSprint, deleteSprint, deleteUser } from '../services/api'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 import { LayoutDashboard, FolderKanban, Users, BarChart2, LogOut, Timer, ChevronRight, Trash2, Plus, X } from 'lucide-react'
 import BurndownChart from '../components/BurndownChart'
 import Notifications from '../components/Notifications'
 import HistoryLog from '../components/HistoryLog'
 
-
+// ... le reste du code reste identique
 function DashboardAdmin() {
   const navigate = useNavigate()
   const [projects, setProjects] = useState([])
@@ -119,6 +119,18 @@ const handleAddMember = async () => {
   const handleLogout = () => {
     localStorage.removeItem('token'); localStorage.removeItem('user'); navigate('/')
   }
+
+  const handleDeleteUser = async (id) => {
+  if (window.confirm('Supprimer cet utilisateur définitivement ?')) {
+    try {
+      await deleteUser(id)
+      fetchUsers()
+      fetchStats()
+    } catch (err) {
+      alert(err.response?.data?.message || 'Erreur !')
+    }
+  }
+}
 
   const menuItems = [
     { id: 'dashboard', icon: <LayoutDashboard size={18} />, label: 'Dashboard' },
@@ -544,51 +556,62 @@ const handleAddMember = async () => {
             </div>
           )}
 
-          {/* Utilisateurs */}
-          {activePage === 'users' && (
-            <div className="space-y-6">
-              <h2 className="text-sm font-semibold text-gray-700">{users.length} utilisateur(s)</h2>
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-gray-50">
-                      <th className="text-left px-6 py-3 text-xs text-gray-400 font-medium">NOM</th>
-                      <th className="text-left px-6 py-3 text-xs text-gray-400 font-medium">EMAIL</th>
-                      <th className="text-left px-6 py-3 text-xs text-gray-400 font-medium">RÔLE</th>
-                      <th className="text-left px-6 py-3 text-xs text-gray-400 font-medium">CHANGER RÔLE</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {users.map((u) => (
-                      <tr key={u.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
-                        <td className="px-6 py-4 text-sm font-medium text-gray-800">{u.name}</td>
-                        <td className="px-6 py-4 text-sm text-gray-400">{u.email}</td>
-                        <td className="px-6 py-4">
-                          <span className={`text-xs px-2 py-1 rounded-full font-medium ${
-                            u.role === 'ADMIN' ? 'bg-rose-50 text-rose-600 border border-rose-100' :
-                            u.role === 'CHEF' ? 'bg-indigo-50 text-indigo-600 border border-indigo-100' :
-                            'bg-emerald-50 text-emerald-600 border border-emerald-100'
-                          }`}>{u.role}</span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <select
-                            className="border border-gray-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:border-indigo-400"
-                            value={u.role}
-                            onChange={(e) => handleUpdateRole(u.id, e.target.value)}
-                          >
-                            <option value="ADMIN">ADMIN</option>
-                            <option value="CHEF">CHEF</option>
-                            <option value="MEMBER">MEMBER</option>
-                          </select>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-
+        {/* Utilisateurs */}
+{activePage === 'users' && (
+  <div className="space-y-6">
+    <h2 className="text-sm font-semibold text-gray-700">{users.length} utilisateur(s)</h2>
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+      <table className="w-full">
+        <thead>
+          <tr className="border-b border-gray-50">
+            <th className="text-left px-6 py-3 text-xs text-gray-400 font-medium">NOM</th>
+            <th className="text-left px-6 py-3 text-xs text-gray-400 font-medium">EMAIL</th>
+            <th className="text-left px-6 py-3 text-xs text-gray-400 font-medium">RÔLE</th>
+            <th className="text-left px-6 py-3 text-xs text-gray-400 font-medium">CHANGER RÔLE</th>
+            <th className="text-left px-6 py-3 text-xs text-gray-400 font-medium">ACTION</th>
+          </tr>
+        </thead>
+        <tbody>
+          {users.map((u) => (
+            <tr key={u.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+              <td className="px-6 py-4 text-sm font-medium text-gray-800">{u.name}</td>
+              <td className="px-6 py-4 text-sm text-gray-400">{u.email}</td>
+              <td className="px-6 py-4">
+                <span className={`text-xs px-2 py-1 rounded-full font-medium ${
+                  u.role === 'ADMIN' ? 'bg-rose-50 text-rose-600 border border-rose-100' :
+                  u.role === 'CHEF' ? 'bg-indigo-50 text-indigo-600 border border-indigo-100' :
+                  'bg-emerald-50 text-emerald-600 border border-emerald-100'
+                }`}>{u.role}</span>
+              </td>
+              <td className="px-6 py-4">
+                <select
+                  className="border border-gray-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:border-indigo-400"
+                  value={u.role}
+                  onChange={(e) => handleUpdateRole(u.id, e.target.value)}
+                >
+                  <option value="ADMIN">ADMIN</option>
+                  <option value="CHEF">CHEF</option>
+                  <option value="MEMBER">MEMBER</option>
+                </select>
+              </td>
+              <td className="px-6 py-4">
+                {u.id !== JSON.parse(localStorage.getItem('user'))?.id && (
+                  <button
+                    onClick={() => handleDeleteUser(u.id)}
+                    className="text-red-400 hover:text-red-600 transition-colors"
+                    title="Supprimer cet utilisateur"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                )}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </div>
+)}
           {/* Statistiques */}
           {activePage === 'stats' && (
             <div className="space-y-6">

@@ -4,28 +4,21 @@ import { Clock } from 'lucide-react'
 
 function HistoryLog({ projectId, showAll }) {
   const [history, setHistory] = useState([])
+  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     fetchHistory()
-    // Mettre à jour la date de dernière connexion
-    localStorage.setItem('lastLogin', new Date().toISOString())
   }, [projectId])
 
   const fetchHistory = async () => {
+    setLoading(true)
     try {
       const res = showAll ? await getAllHistory() : await getProjectHistory(projectId)
-      
-      // Récupérer la date de dernière connexion
-      const lastLogin = localStorage.getItem('lastLogin')
-      
-      // Filtrer seulement les nouvelles activités depuis la dernière connexion
-      const filtered = lastLogin 
-        ? res.data.filter(item => new Date(item.createdAt) > new Date(lastLogin))
-        : res.data
-
-      setHistory(filtered)
+      setHistory(res.data)
     } catch (err) {
       console.error(err)
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -40,20 +33,24 @@ function HistoryLog({ projectId, showAll }) {
       <div className="px-6 py-4 border-b border-gray-50 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Clock size={16} className="text-gray-400" />
-          <h3 className="text-sm font-semibold text-gray-700">Nouvelles activités</h3>
+          <h3 className="text-sm font-semibold text-gray-700">Historique des activités</h3>
         </div>
         {history.length > 0 && (
           <span className="bg-indigo-50 text-indigo-600 text-xs px-2 py-0.5 rounded-full border border-indigo-100">
-            {history.length} nouvelle(s)
+            {history.length} activité(s)
           </span>
         )}
       </div>
 
       <div className="max-h-80 overflow-y-auto">
-        {history.length === 0 ? (
+        {loading ? (
+          <div className="text-center text-gray-300 py-8">
+            <p className="text-xs">Chargement...</p>
+          </div>
+        ) : history.length === 0 ? (
           <div className="text-center text-gray-300 py-8">
             <Clock size={32} className="mx-auto mb-2 opacity-50" />
-            <p className="text-xs">Aucune nouvelle activité</p>
+            <p className="text-xs">Aucune activité</p>
           </div>
         ) : (
           history.map((item) => (

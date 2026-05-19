@@ -12,9 +12,11 @@ const {
   getStats,
   removeMember,
   getMyProjects,
-  updateUserRole
+  updateUserRole,
+  deleteUser
 } = require('../controllers/projectController')
 const { verifyToken } = require('../middlewares/authMiddleware')
+
 
 router.get('/stats', verifyToken, getStats)
 router.get('/users', verifyToken, getUsers)
@@ -28,5 +30,6 @@ router.post('/:id/members', verifyToken, addMember)
 router.get('/:id/members', verifyToken, getMembers)
 router.delete('/:id/members/:userId', verifyToken, removeMember)
 router.put('/users/:id/role', verifyToken, updateUserRole)
+router.delete('/users/:id', verifyToken, deleteUser)
 
 module.exports = router

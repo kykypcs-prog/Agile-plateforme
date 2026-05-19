@@ -33,6 +33,7 @@ export const removeMember = (projectId, userId) => API.delete(`/projects/${proje
 // Utilisateurs
 export const getUsers = () => API.get('/projects/users')
 export const updateUserRole = (id, role) => API.put(`/projects/users/${id}/role`, { role })
+export const deleteUser = (id) => API.delete(`/projects/users/${id}`)
 
 // Sprints
 export const getSprints = (projectId) => API.get(`/sprints/${projectId}`)

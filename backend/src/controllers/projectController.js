@@ -282,6 +282,34 @@ const updateUserRole = async (req, res) => {
   }
 }
 
+const deleteUser = async (req, res) => {
+  try {
+    const { id } = req.params
+
+    // Supprimer les notifications
+    await prisma.notification.deleteMany({ where: { userId: parseInt(id) } })
+
+    // Supprimer l'historique
+    await prisma.history.deleteMany({ where: { userId: parseInt(id) } })
+
+    // Retirer des projets
+    await prisma.projectMember.deleteMany({ where: { userId: parseInt(id) } })
+
+    // Désassigner les tâches
+    await prisma.task.updateMany({
+      where: { userId: parseInt(id) },
+      data: { userId: null }
+    })
+
+    // Supprimer l'utilisateur
+    await prisma.user.delete({ where: { id: parseInt(id) } })
+
+    res.json({ message: 'Utilisateur supprimé avec succès !' })
+  } catch (error) {
+    res.status(500).json({ message: 'Erreur serveur', error })
+  }
+}
+
 module.exports = { 
   createProject,
   getProjects,
@@ -295,4 +323,5 @@ module.exports = {
   removeMember,
   getMyProjects,
   updateUserRole,
+  deleteUser
 }
