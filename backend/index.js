@@ -1,3 +1,4 @@
+require('dotenv').config()
 const express = require('express')
 const cors = require('cors')
 require('dotenv').config()
@@ -28,7 +29,7 @@ app.get('/', (req, res) => {
   res.json({ message: 'API Agile Platform fonctionne !' })
 })
 
-// Lancer le serveur
+ // Lancer le serveur
 app.listen(PORT, () => {
   console.log(`Serveur lancé sur le port ${PORT}`)
 })

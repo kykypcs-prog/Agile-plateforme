@@ -9,14 +9,14 @@ const {
   updateSprintStatus,
   getSprintProgress
 } = require('../controllers/sprintController')
-const { verifyToken } = require('../middlewares/authMiddleware')
+const { authenticateToken } = require('../middlewares/authMiddleware')
 
-router.post('/', verifyToken, createSprint)
-router.get('/burndown/:id', verifyToken, getBurndown)
-router.get('/progress/:id', verifyToken, getSprintProgress)
-router.get('/:projectId', verifyToken, getSprints)
-router.put('/:id/status', verifyToken, updateSprintStatus)
-router.put('/:id', verifyToken, updateSprint)
-router.delete('/:id', verifyToken, deleteSprint)
+router.post('/', authenticateToken, createSprint)
+router.get('/burndown/:id', authenticateToken, getBurndown)
+router.get('/progress/:id', authenticateToken, getSprintProgress)
+router.get('/:projectId', authenticateToken, getSprints)
+router.put('/:id/status', authenticateToken, updateSprintStatus)
+router.put('/:id', authenticateToken, updateSprint)
+router.delete('/:id', authenticateToken, deleteSprint)
 
 module.exports = router

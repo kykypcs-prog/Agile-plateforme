@@ -1,9 +1,9 @@
 const express = require('express')
 const router = express.Router()
 const { getProjectHistory, getAllHistory } = require('../controllers/historyController')
-const { verifyToken } = require('../middlewares/authMiddleware')
+const { authenticateToken } = require('../middlewares/authMiddleware')
 
-router.get('/', verifyToken, getAllHistory)
-router.get('/:id', verifyToken, getProjectHistory)
+router.get('/', authenticateToken, getAllHistory)
+router.get('/:id', authenticateToken, getProjectHistory)
 
 module.exports = router

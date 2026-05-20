@@ -59,4 +59,7 @@ export const markAllAsRead = () => API.put('/notifications/read-all')
 export const getAllHistory = () => API.get('/history')
 export const getProjectHistory = (id) => API.get(`/history/${id}`)
 
+// api.js
+export const adminCreateUser = (userData) => api.post('/admin/users', userData)
+
 export default API

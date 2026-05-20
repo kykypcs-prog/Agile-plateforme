@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken')
 
-const verifyToken = (req, res, next) => {
+const authenticateToken = (req, res, next) => {
   const token = req.headers['authorization']
 
   if (!token) {
@@ -16,4 +16,11 @@ const verifyToken = (req, res, next) => {
   }
 }
 
-module.exports = { verifyToken }
+const isAdmin = (req, res, next) => {
+  if (req.user.role !== 'ADMIN') {
+    return res.status(403).json({ message: 'Accès interdit' })
+  }
+  next()
+}
+
+module.exports = { authenticateToken, isAdmin }

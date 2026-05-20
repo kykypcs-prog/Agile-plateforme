@@ -8,7 +8,6 @@ const createTask = async (req, res) => {
   try {
     const { title, description, sprintId, userId, priority } = req.body
 
-    // Vérifier que le sprint n'est pas TERMINE
     const sprint = await prisma.sprint.findUnique({
       where: { id: parseInt(sprintId) }
     })
@@ -28,12 +27,9 @@ const createTask = async (req, res) => {
       include: { assignee: true }
     })
 
-    // Notification à la personne assignée
     if (userId) {
       await createNotification(userId, `Une tâche "${title}" vous a été assignée !`)
     }
-
-    // Historique
     await createHistory(req.user.id, `A créé la tâche "${title}"`, sprint.projectId)
 
     res.status(201).json({ message: 'Tâche créée avec succès !', task })
@@ -60,7 +56,7 @@ const getTasks = async (req, res) => {
   }
 }
 
-// Modifier une tâche
+// Modifier une tâche (seulement les champs envoyés)
 const updateTask = async (req, res) => {
   try {
     const { id } = req.params
@@ -71,29 +67,33 @@ const updateTask = async (req, res) => {
       include: { sprint: true }
     })
 
+    // Construire l'objet data uniquement avec les champs fournis
+    const data = {}
+    if (title !== undefined) data.title = title
+    if (description !== undefined) data.description = description
+    if (status !== undefined) data.status = status
+    if (priority !== undefined) data.priority = priority
+    if (userId !== undefined) data.userId = userId ? parseInt(userId) : null
+
     const task = await prisma.task.update({
       where: { id: parseInt(id) },
-      data: { title, description, status, priority, userId: userId ? parseInt(userId) : null },
+      data,
       include: { assignee: true }
     })
 
-    // Notification si statut changé
+    // Notifications
     if (status && status !== oldTask.status && task.userId) {
       await createNotification(
-        task.userId, 
+        task.userId,
         `La tâche "${task.title}" est maintenant ${status}`
       )
     }
-
-    // Notification si nouvelle assignation
-    if (userId && userId !== oldTask.userId) {
-      await createNotification(userId, `La tâche "${task.title}" vous a été assignée !`)
+    if (userId !== undefined && userId !== oldTask.userId && userId) {
+      await createNotification(parseInt(userId), `La tâche "${task.title}" vous a été assignée !`)
     }
-
-    // Historique
     if (status && status !== oldTask.status) {
       await createHistory(
-        req.user.id, 
+        req.user.id,
         `A changé le statut de "${task.title}" en ${status}`,
         oldTask.sprint.projectId
       )
@@ -116,12 +116,9 @@ const deleteTask = async (req, res) => {
 
     await prisma.task.delete({ where: { id: parseInt(id) } })
 
-     // Notifier la personne assignée
-if (task.userId) {
-  await createNotification(task.userId, `La tâche "${task.title}" a été supprimée !`)
-}
-
-    // Historique
+    if (task.userId) {
+      await createNotification(task.userId, `La tâche "${task.title}" a été supprimée !`)
+    }
     await createHistory(req.user.id, `A supprimé la tâche "${task.title}"`, task.sprint.projectId)
 
     res.json({ message: 'Tâche supprimée avec succès !' })

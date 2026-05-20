@@ -19,12 +19,15 @@ function ProjectDetail() {
   const [taskForm, setTaskForm] = useState({ title: '', description: '', userId: '' })
   const [selectedUser, setSelectedUser] = useState('')
   const user = JSON.parse(localStorage.getItem('user'))
+  const isMember = user?.role === 'MEMBER'
 
   useEffect(() => {
-    fetchSprints()
-    fetchMembers()
-    fetchUsers()
-  }, [])
+    if (id) {
+      fetchSprints()
+      fetchMembers()
+      fetchUsers()
+    }
+  }, [id])
 
   const fetchSprints = async () => {
     try {
@@ -48,9 +51,10 @@ function ProjectDetail() {
   }
 
   const fetchTasks = async (sprintId) => {
+    if (!sprintId) return
     try {
       const res = await getTasks(sprintId)
-      if (user?.role === 'MEMBER') {
+      if (isMember) {
         setTasks(res.data.filter(t => t.userId === user?.id))
       } else {
         setTasks(res.data)
@@ -71,6 +75,10 @@ function ProjectDetail() {
     if (window.confirm('Supprimer ce sprint ?')) {
       try {
         await deleteSprint(sprintId)
+        if (selectedSprint === sprintId) {
+          setSelectedSprint('')
+          setTasks([])
+        }
         fetchSprints()
       } catch (err) { console.error(err) }
     }
@@ -84,6 +92,7 @@ function ProjectDetail() {
   }
 
   const handleAddMember = async () => {
+    if (!selectedUser) return
     try {
       await addMember(id, selectedUser)
       setShowMemberForm(false)
@@ -106,22 +115,39 @@ function ProjectDetail() {
       await createTask({ ...taskForm, sprintId: selectedSprint })
       setShowTaskForm(false)
       setTaskForm({ title: '', description: '', userId: '' })
-      fetchTasks(selectedSprint)
+      await fetchTasks(selectedSprint)
     } catch (err) { console.error(err) }
   }
 
   const handleMoveTask = async (taskId, newStatus) => {
-    try {
-      await updateTask(taskId, { status: newStatus })
-      fetchTasks(selectedSprint)
-    } catch (err) { console.error(err) }
+    if (isMember) {
+      // Mise à jour locale pour les membres (évite perte d'assignation)
+      setTasks(prev => prev.map(t =>
+        t.id === taskId ? { ...t, status: newStatus } : t
+      ))
+      try {
+        await updateTask(taskId, { status: newStatus })
+      } catch (err) {
+        console.error(err)
+        await fetchTasks(selectedSprint)
+      }
+    } else {
+      // Admin/Chef : refetch normal
+      try {
+        await updateTask(taskId, { status: newStatus })
+        await fetchTasks(selectedSprint)
+      } catch (err) {
+        console.error(err)
+        await fetchTasks(selectedSprint)
+      }
+    }
   }
 
   const handleDeleteTask = async (taskId) => {
     if (window.confirm('Supprimer cette tâche ?')) {
       try {
         await deleteTask(taskId)
-        fetchTasks(selectedSprint)
+        await fetchTasks(selectedSprint)
       } catch (err) { console.error(err) }
     }
   }
@@ -229,7 +255,6 @@ function ProjectDetail() {
 
       {/* Main Content */}
       <div className="flex-1 ml-60">
-        {/* Header */}
         <div className="bg-white/80 backdrop-blur-md border-b border-gray-200 px-8 py-4 flex justify-between items-center sticky top-0 z-10 shadow-sm">
           <div className="animate-fadeInUp">
             <h2 className="text-xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent flex items-center gap-2">
@@ -251,8 +276,7 @@ function ProjectDetail() {
         </div>
 
         <div className="p-8 animate-fadeInUp">
-
-          {/* Sprints */}
+          {/* SPRINTS */}
           {activePage === 'sprints' && (
             <div>
               <div className="flex justify-between items-center mb-6">
@@ -287,11 +311,11 @@ function ProjectDetail() {
                   <div className="grid grid-cols-2 gap-3 mb-4">
                     <div>
                       <label className="text-xs text-gray-500 mb-1 block">Date début</label>
-                      <input type="date" className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-indigo-400" onChange={(e) => setSprintForm({ ...sprintForm, startDate: e.target.value })} />
+                      <input type="date" className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm" onChange={(e) => setSprintForm({ ...sprintForm, startDate: e.target.value })} />
                     </div>
                     <div>
                       <label className="text-xs text-gray-500 mb-1 block">Date fin</label>
-                      <input type="date" className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-indigo-400" onChange={(e) => setSprintForm({ ...sprintForm, endDate: e.target.value })} />
+                      <input type="date" className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm" onChange={(e) => setSprintForm({ ...sprintForm, endDate: e.target.value })} />
                     </div>
                   </div>
                   <div className="flex gap-3">
@@ -329,28 +353,13 @@ function ProjectDetail() {
                         <span className="text-xs text-gray-400">{sprint.tasks?.length || 0} tâche(s)</span>
                         <div className="flex items-center gap-2">
                           {user?.role === 'CHEF' && sprint.status === 'A_VENIR' && (
-                            <button
-                              onClick={() => handleUpdateSprintStatus(sprint.id, 'EN_COURS')}
-                              className="text-xs bg-emerald-100 hover:bg-emerald-200 text-emerald-600 px-2 py-1 rounded-lg transition-all hover:scale-105"
-                            >
-                              ▶ Démarrer
-                            </button>
+                            <button onClick={() => handleUpdateSprintStatus(sprint.id, 'EN_COURS')} className="text-xs bg-emerald-100 hover:bg-emerald-200 text-emerald-600 px-2 py-1 rounded-lg">▶ Démarrer</button>
                           )}
                           {user?.role === 'CHEF' && sprint.status === 'EN_COURS' && (
-                            <button
-                              onClick={() => handleUpdateSprintStatus(sprint.id, 'TERMINE')}
-                              className="text-xs bg-gray-100 hover:bg-gray-200 text-gray-600 px-2 py-1 rounded-lg transition-all hover:scale-105"
-                            >
-                              ⏹ Terminer
-                            </button>
+                            <button onClick={() => handleUpdateSprintStatus(sprint.id, 'TERMINE')} className="text-xs bg-gray-100 hover:bg-gray-200 text-gray-600 px-2 py-1 rounded-lg">⏹ Terminer</button>
                           )}
                           {(user?.role === 'ADMIN' || user?.role === 'CHEF') && sprint.status !== 'EN_COURS' && (
-                            <button
-                              onClick={() => handleDeleteSprint(sprint.id)}
-                              className="text-red-400 hover:text-red-600 transition-all hover:scale-110"
-                            >
-                              <Trash2 size={14} />
-                            </button>
+                            <button onClick={() => handleDeleteSprint(sprint.id)} className="text-red-400 hover:text-red-600"><Trash2 size={14} /></button>
                           )}
                         </div>
                       </div>
@@ -361,7 +370,7 @@ function ProjectDetail() {
             </div>
           )}
 
-          {/* Kanban */}
+          {/* KANBAN */}
           {activePage === 'kanban' && (
             <div>
               <div className="flex justify-between items-center mb-6">
@@ -400,22 +409,22 @@ function ProjectDetail() {
                 <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 animate-fadeInUp mb-6">
                   <div className="flex justify-between items-center mb-4">
                     <h3 className="text-sm font-bold text-gray-700">Nouvelle Tâche</h3>
-                    <button onClick={() => setShowTaskForm(false)} className="text-gray-400 hover:text-gray-600 transition-all hover:rotate-90"><X size={18} /></button>
+                    <button onClick={() => setShowTaskForm(false)} className="text-gray-400 hover:text-gray-600"><X size={18} /></button>
                   </div>
                   <input
                     type="text"
-                    placeholder="Titre de la tâche"
-                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 mb-3 text-sm focus:outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 transition-all"
+                    placeholder="Titre"
+                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 mb-3 text-sm"
                     onChange={(e) => setTaskForm({ ...taskForm, title: e.target.value })}
                   />
                   <input
                     type="text"
                     placeholder="Description"
-                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 mb-3 text-sm focus:outline-none focus:border-emerald-400 transition-all"
+                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 mb-3 text-sm"
                     onChange={(e) => setTaskForm({ ...taskForm, description: e.target.value })}
                   />
                   <select
-                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 mb-4 text-sm focus:outline-none focus:border-emerald-400 transition-all"
+                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 mb-4 text-sm"
                     onChange={(e) => setTaskForm({ ...taskForm, userId: e.target.value })}
                     value={taskForm.userId}
                   >
@@ -425,8 +434,8 @@ function ProjectDetail() {
                     ))}
                   </select>
                   <div className="flex gap-3">
-                    <button onClick={handleCreateTask} className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-5 py-2 rounded-xl text-sm font-medium hover:shadow-md transition-all hover:scale-105">Créer</button>
-                    <button onClick={() => setShowTaskForm(false)} className="bg-gray-100 text-gray-600 px-5 py-2 rounded-xl text-sm font-medium hover:bg-gray-200 transition-all">Annuler</button>
+                    <button onClick={handleCreateTask} className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-5 py-2 rounded-xl">Créer</button>
+                    <button onClick={() => setShowTaskForm(false)} className="bg-gray-100 text-gray-600 px-5 py-2 rounded-xl">Annuler</button>
                   </div>
                 </div>
               )}
@@ -442,25 +451,23 @@ function ProjectDetail() {
                       <div className="flex items-center gap-2 mb-4">
                         <div className={`w-2 h-2 rounded-full ${col.dot} animate-pulse`}></div>
                         <h3 className={`text-sm font-bold ${col.color}`}>{col.label}</h3>
-                        <span className="ml-auto bg-white text-gray-500 text-xs px-2 py-0.5 rounded-full border border-gray-200 shadow-sm">
+                        <span className="ml-auto bg-white text-gray-500 text-xs px-2 py-0.5 rounded-full border">
                           {getTasksByStatus(col.status).length}
                         </span>
                       </div>
                       <div className="space-y-3 max-h-[500px] overflow-y-auto pr-1">
                         {getTasksByStatus(col.status).map((task) => (
-                          <div key={task.id} className="bg-white rounded-xl p-3 shadow-md border border-gray-100 hover:shadow-lg transition-all duration-200 group">
+                          <div key={task.id} className="bg-white rounded-xl p-3 shadow-md border border-gray-100 hover:shadow-lg transition-all">
                             <div className="flex justify-between items-start mb-2">
                               <p className="text-sm font-semibold text-gray-800">{task.title}</p>
                               {(user?.role === 'ADMIN' || user?.role === 'CHEF' || task.userId === user?.id) && (
-                                <button onClick={() => handleDeleteTask(task.id)} className="text-gray-300 hover:text-red-400 transition-all hover:scale-110">
-                                  <Trash2 size={12} />
-                                </button>
+                                <button onClick={() => handleDeleteTask(task.id)} className="text-gray-300 hover:text-red-400"><Trash2 size={12} /></button>
                               )}
                             </div>
                             {task.description && <p className="text-xs text-gray-400 mb-2">{task.description}</p>}
                             {task.assignee && (
                               <div className="flex items-center gap-1 mb-2">
-                                <div className="w-4 h-4 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full flex items-center justify-center shadow-sm">
+                                <div className="w-4 h-4 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full flex items-center justify-center">
                                   <span className="text-white text-[8px]">{task.assignee.name.charAt(0)}</span>
                                 </div>
                                 <span className="text-xs text-gray-500">{task.assignee.name}</span>
@@ -470,7 +477,7 @@ function ProjectDetail() {
                               {col.status !== 'TODO' && (
                                 <button
                                   onClick={() => handleMoveTask(task.id, col.status === 'IN_PROGRESS' ? 'TODO' : 'IN_PROGRESS')}
-                                  className="text-xs bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded-lg transition-all text-gray-600 hover:scale-105"
+                                  className="text-xs bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded-lg"
                                 >
                                   ← Reculer
                                 </button>
@@ -478,7 +485,7 @@ function ProjectDetail() {
                               {col.status !== 'DONE' && (
                                 <button
                                   onClick={() => handleMoveTask(task.id, col.status === 'TODO' ? 'IN_PROGRESS' : 'DONE')}
-                                  className="text-xs bg-indigo-100 hover:bg-indigo-200 px-2 py-1 rounded-lg transition-all text-indigo-600 hover:scale-105"
+                                  className="text-xs bg-indigo-100 hover:bg-indigo-200 px-2 py-1 rounded-lg text-indigo-600"
                                 >
                                   Avancer →
                                 </button>
@@ -502,7 +509,7 @@ function ProjectDetail() {
             </div>
           )}
 
-          {/* Membres */}
+          {/* MEMBRES */}
           {activePage === 'members' && (
             <div>
               <div className="flex justify-between items-center mb-6">
@@ -513,7 +520,7 @@ function ProjectDetail() {
                 {(user?.role === 'ADMIN' || user?.role === 'CHEF') && (
                   <button
                     onClick={() => setShowMemberForm(!showMemberForm)}
-                    className="flex items-center gap-2 bg-gradient-to-r from-rose-500 to-pink-600 text-white px-4 py-2 rounded-xl text-sm font-medium hover:shadow-lg transition-all duration-300 hover:scale-105"
+                    className="flex items-center gap-2 bg-gradient-to-r from-rose-500 to-pink-600 text-white px-4 py-2 rounded-xl text-sm font-medium hover:shadow-lg"
                   >
                     <Plus size={16} /> Ajouter un membre
                   </button>
@@ -524,10 +531,10 @@ function ProjectDetail() {
                 <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 animate-fadeInUp mb-6">
                   <div className="flex justify-between items-center mb-4">
                     <h3 className="text-sm font-bold text-gray-700">Ajouter un membre</h3>
-                    <button onClick={() => setShowMemberForm(false)} className="text-gray-400 hover:text-gray-600 transition-all hover:rotate-90"><X size={18} /></button>
+                    <button onClick={() => setShowMemberForm(false)} className="text-gray-400 hover:text-gray-600"><X size={18} /></button>
                   </div>
                   <select
-                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 mb-4 text-sm focus:outline-none focus:border-rose-400 transition-all"
+                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 mb-4 text-sm"
                     onChange={(e) => setSelectedUser(e.target.value)}
                     value={selectedUser}
                   >
@@ -537,8 +544,8 @@ function ProjectDetail() {
                     ))}
                   </select>
                   <div className="flex gap-3">
-                    <button onClick={handleAddMember} className="bg-gradient-to-r from-rose-500 to-pink-600 text-white px-5 py-2 rounded-xl text-sm font-medium hover:shadow-md transition-all hover:scale-105">Ajouter</button>
-                    <button onClick={() => setShowMemberForm(false)} className="bg-gray-100 text-gray-600 px-5 py-2 rounded-xl text-sm font-medium hover:bg-gray-200 transition-all">Annuler</button>
+                    <button onClick={handleAddMember} className="bg-gradient-to-r from-rose-500 to-pink-600 text-white px-5 py-2 rounded-xl">Ajouter</button>
+                    <button onClick={() => setShowMemberForm(false)} className="bg-gray-100 text-gray-600 px-5 py-2 rounded-xl">Annuler</button>
                   </div>
                 </div>
               )}
@@ -553,24 +560,20 @@ function ProjectDetail() {
                   <table className="w-full">
                     <thead>
                       <tr className="border-b border-gray-100 bg-gray-50/50">
-                        <th className="text-left px-6 py-3 text-xs text-gray-500 font-semibold uppercase tracking-wider">Nom</th>
-                        <th className="text-left px-6 py-3 text-xs text-gray-500 font-semibold uppercase tracking-wider">Email</th>
-                        <th className="text-left px-6 py-3 text-xs text-gray-500 font-semibold uppercase tracking-wider">Rôle</th>
-                        <th className="text-left px-6 py-3 text-xs text-gray-500 font-semibold uppercase tracking-wider">Statut</th>
-                        {(user?.role === 'ADMIN' || user?.role === 'CHEF') && (
-                          <th className="text-left px-6 py-3 text-xs text-gray-500 font-semibold uppercase tracking-wider">Action</th>
-                        )}
+                        <th className="text-left px-6 py-3 text-xs text-gray-500 font-semibold uppercase">Nom</th>
+                        <th className="text-left px-6 py-3 text-xs text-gray-500 font-semibold uppercase">Email</th>
+                        <th className="text-left px-6 py-3 text-xs text-gray-500 font-semibold uppercase">Rôle</th>
+                        <th className="text-left px-6 py-3 text-xs text-gray-500 font-semibold uppercase">Statut</th>
+                        {(user?.role === 'ADMIN' || user?.role === 'CHEF') && <th className="text-left px-6 py-3 text-xs text-gray-500 font-semibold uppercase">Action</th>}
                       </tr>
                     </thead>
                     <tbody>
                       {members.map((member) => (
-                        <tr key={member.id} className="border-b border-gray-50 hover:bg-rose-50/30 transition-all duration-200">
+                        <tr key={member.id} className="border-b border-gray-50 hover:bg-rose-50/30 transition-all">
                           <td className="px-6 py-4">
                             <div className="flex items-center gap-2">
                               <div className={`w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold shadow-sm ${
-                                member.user.id === user?.id 
-                                  ? 'bg-gradient-to-r from-emerald-500 to-teal-600' 
-                                  : 'bg-gradient-to-r from-gray-400 to-gray-500'
+                                member.user.id === user?.id ? 'bg-gradient-to-r from-emerald-500 to-teal-600' : 'bg-gradient-to-r from-gray-400 to-gray-500'
                               }`}>
                                 {member.user.name.charAt(0)}
                               </div>
@@ -593,12 +596,7 @@ function ProjectDetail() {
                           </td>
                           {(user?.role === 'ADMIN' || user?.role === 'CHEF') && (
                             <td className="px-6 py-4">
-                              <button
-                                onClick={() => handleRemoveMember(member.user.id)}
-                                className="text-red-400 hover:text-red-600 transition-all hover:scale-110 flex items-center gap-1"
-                              >
-                                <Trash2 size={14} /> Retirer
-                              </button>
+                              <button onClick={() => handleRemoveMember(member.user.id)} className="text-red-400 hover:text-red-600 flex items-center gap-1"><Trash2 size={14} /> Retirer</button>
                             </td>
                           )}
                         </tr>
@@ -609,7 +607,6 @@ function ProjectDetail() {
               )}
             </div>
           )}
-
         </div>
       </div>
     </div>

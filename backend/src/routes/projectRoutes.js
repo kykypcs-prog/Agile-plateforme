@@ -15,21 +15,21 @@ const {
   updateUserRole,
   deleteUser
 } = require('../controllers/projectController')
-const { verifyToken } = require('../middlewares/authMiddleware')
+const { authenticateToken } = require('../middlewares/authMiddleware') // ← ici
 
-
-router.get('/stats', verifyToken, getStats)
-router.get('/users', verifyToken, getUsers)
-router.get('/my-projects', verifyToken, getMyProjects)
-router.post('/', verifyToken, createProject)
-router.get('/', verifyToken, getProjects)
-router.get('/:id', verifyToken, getProject)
-router.put('/:id', verifyToken, updateProject)
-router.delete('/:id', verifyToken, deleteProject)
-router.post('/:id/members', verifyToken, addMember)
-router.get('/:id/members', verifyToken, getMembers)
-router.delete('/:id/members/:userId', verifyToken, removeMember)
-router.put('/users/:id/role', verifyToken, updateUserRole)
-router.delete('/users/:id', verifyToken, deleteUser)
+// Routes
+router.get('/stats', authenticateToken, getStats)
+router.get('/users', authenticateToken, getUsers)
+router.get('/my-projects', authenticateToken, getMyProjects)
+router.post('/', authenticateToken, createProject)
+router.get('/', authenticateToken, getProjects)
+router.get('/:id', authenticateToken, getProject)
+router.put('/:id', authenticateToken, updateProject)
+router.delete('/:id', authenticateToken, deleteProject)
+router.post('/:id/members', authenticateToken, addMember)
+router.get('/:id/members', authenticateToken, getMembers)
+router.delete('/:id/members/:userId', authenticateToken, removeMember)
+router.put('/users/:id/role', authenticateToken, updateUserRole)
+router.delete('/users/:id', authenticateToken, deleteUser)
 
 module.exports = router
