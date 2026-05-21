@@ -60,6 +60,13 @@ function DashboardAdmin() {
     try { const res = await getSprints(projectId); setSprints(res.data) } catch (err) { console.error(err) }
   }
 
+useEffect(() => {
+  if (selectedProjectSprint) {
+    fetchSprints(selectedProjectSprint)
+  }
+}, [selectedProjectSprint])
+
+
   const handleCreateProject = async () => {
     try {
       await createProject(projectForm)

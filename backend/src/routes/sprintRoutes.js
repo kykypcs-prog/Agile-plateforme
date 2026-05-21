@@ -14,7 +14,7 @@ const { authenticateToken } = require('../middlewares/authMiddleware')
 router.post('/', authenticateToken, createSprint)
 router.get('/burndown/:id', authenticateToken, getBurndown)
 router.get('/progress/:id', authenticateToken, getSprintProgress)
-router.get('/:projectId', authenticateToken, getSprints)
+router.get('/project/:projectId', authenticateToken, getSprints)  // ← modifié : /project/:projectId
 router.put('/:id/status', authenticateToken, updateSprintStatus)
 router.put('/:id', authenticateToken, updateSprint)
 router.delete('/:id', authenticateToken, deleteSprint)

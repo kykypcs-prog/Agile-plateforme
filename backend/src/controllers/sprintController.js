@@ -8,14 +8,12 @@ const createSprint = async (req, res) => {
   try {
     const { name, startDate, endDate, projectId } = req.body
 
-    // Vérifier que la date de fin est après la date de début
     if (new Date(endDate) <= new Date(startDate)) {
       return res.status(400).json({ 
         message: 'La date de fin doit être après la date de début !' 
       })
     }
 
-    // Vérifier qu'il n'y a pas déjà un sprint EN_COURS
     const activeSprint = await prisma.sprint.findFirst({
       where: { projectId: parseInt(projectId), status: 'EN_COURS' }
     })
@@ -35,10 +33,8 @@ const createSprint = async (req, res) => {
       }
     })
 
-    // Historique
     await createHistory(req.user.id, `A créé le sprint "${name}"`, parseInt(projectId))
 
-    // Notifier les membres du projet
     const members = await prisma.projectMember.findMany({
       where: { projectId: parseInt(projectId) },
       include: { user: true }
@@ -53,7 +49,7 @@ const createSprint = async (req, res) => {
   }
 }
 
-// Récupérer les sprints d'un projet
+// Récupérer les sprints d'un projet (via projectId dans les params)
 const getSprints = async (req, res) => {
   try {
     const { projectId } = req.params
@@ -100,14 +96,11 @@ const deleteSprint = async (req, res) => {
       return res.status(404).json({ message: 'Sprint non trouvé !' })
     }
 
-    // Supprimer les tâches du sprint
     await prisma.task.deleteMany({ where: { sprintId: parseInt(id) } })
     await prisma.sprint.delete({ where: { id: parseInt(id) } })
 
-    // Historique
     await createHistory(req.user.id, `A supprimé le sprint "${sprint.name}"`, sprint.projectId)
 
-    // Notifier les membres du projet
     const members = await prisma.projectMember.findMany({
       where: { projectId: sprint.projectId }
     })
@@ -150,10 +143,8 @@ const updateSprintStatus = async (req, res) => {
       data: { status }
     })
 
-    // Historique
     await createHistory(req.user.id, `A changé le statut du sprint "${sprint.name}" en ${status}`, sprint.projectId)
 
-    // Notifier les membres
     const members = await prisma.projectMember.findMany({
       where: { projectId: sprint.projectId }
     })
@@ -233,6 +224,11 @@ const getBurndown = async (req, res) => {
 }
 
 module.exports = { 
-  createSprint, getSprints, updateSprint, deleteSprint, 
-  getBurndown, updateSprintStatus, getSprintProgress 
+  createSprint, 
+  getSprints, 
+  updateSprint, 
+  deleteSprint, 
+  getBurndown, 
+  updateSprintStatus, 
+  getSprintProgress
 }
