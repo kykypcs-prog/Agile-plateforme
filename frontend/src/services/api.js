@@ -4,11 +4,11 @@ const API = axios.create({
   baseURL: 'http://localhost:5000/api'
 })
 
-// Ajouter le token automatiquement
+// Intercepteur pour ajouter le token (avec Bearer)
 API.interceptors.request.use((config) => {
   const token = localStorage.getItem('token')
   if (token) {
-    config.headers.authorization = token
+    config.headers.Authorization = `Bearer ${token}`
   }
   return config
 })
@@ -17,7 +17,7 @@ API.interceptors.request.use((config) => {
 export const register = (data) => API.post('/auth/register', data)
 export const login = (data) => API.post('/auth/login', data)
 
-// Projets
+// Projets (les routes sont sous /projects dans le backend)
 export const getProjects = () => API.get('/projects')
 export const createProject = (data) => API.post('/projects', data)
 export const updateProject = (id, data) => API.put(`/projects/${id}`, data)
@@ -36,7 +36,7 @@ export const updateUserRole = (id, role) => API.put(`/projects/users/${id}/role`
 export const deleteUser = (id) => API.delete(`/projects/users/${id}`)
 
 // Sprints
-export const getSprints = (projectId) => API.get(`/sprints/${projectId}`)
+export const getSprints = (projectId) => API.get(`/sprints/project/${projectId}`)
 export const createSprint = (data) => API.post('/sprints', data)
 export const updateSprint = (id, data) => API.put(`/sprints/${id}`, data)
 export const deleteSprint = (id) => API.delete(`/sprints/${id}`)
@@ -59,7 +59,7 @@ export const markAllAsRead = () => API.put('/notifications/read-all')
 export const getAllHistory = () => API.get('/history')
 export const getProjectHistory = (id) => API.get(`/history/${id}`)
 
-// api.js
-export const adminCreateUser = (userData) => api.post('/admin/users', userData)
+// Admin : création d'utilisateur (route dans authRoutes)
+export const adminCreateUser = (userData) => API.post('/auth/admin/users', userData)
 
 export default API

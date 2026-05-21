@@ -135,18 +135,21 @@ function DashboardAdmin() {
   }
 
   // NOUVELLE FONCTION : création d'utilisateur par l'admin
-  const handleCreateUser = async () => {
-    try {
-      await adminCreateUser(userForm)
-      setShowUserForm(false)
-      setUserForm({ name: '', email: '', password: '', role: 'MEMBER' })
-      fetchUsers()
-      fetchStats()
-      alert(`Utilisateur ${userForm.role} créé avec succès`)
-    } catch (err) {
-      alert(err.response?.data?.message || 'Erreur lors de la création')
-    }
+ const handleCreateUser = async () => {
+  try {
+    await adminCreateUser(userForm)
+    setShowUserForm(false)
+    setUserForm({ name: '', email: '', password: '', role: 'MEMBER' })
+    fetchUsers()
+    fetchStats()
+  alert(`Utilisateur ${userForm.role} créé avec succès`)
+  } catch (err) {
+    console.error('Erreur complète :', err)
+    console.error('Réponse :', err.response)
+    const message = err.response?.data?.message || err.message || 'Erreur inconnue'
+    alert(`Erreur : ${message}`)
   }
+}
 
   const menuItems = [
     { id: 'dashboard', icon: <LayoutDashboard size={18} />, label: 'Dashboard', gradient: 'from-indigo-500 to-purple-600' },
@@ -450,10 +453,7 @@ function DashboardAdmin() {
       </div>
 
       {/* Définition des gradients (pour les barres) */}
-      <defs>
-        <linearGradient id="gradientBar" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#6366f1"/><stop offset="100%" stopColor="#818cf8"/></linearGradient>
-        <linearGradient id="gradientBarStats" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#8b5cf6"/><stop offset="100%" stopColor="#a78bfa"/></linearGradient>
-      </defs>
+      
     </div>
   )
 }
