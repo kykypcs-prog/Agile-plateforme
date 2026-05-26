@@ -1,7 +1,7 @@
 require('dotenv').config()
 const express = require('express')
 const cors = require('cors')
-require('dotenv').config()
+const path = require('path')
 
 const authRoutes = require('./src/routes/authRoutes')
 const projectRoutes = require('./src/routes/projectRoutes')
@@ -17,7 +17,7 @@ const PORT = process.env.PORT || 5000
 app.use(cors())
 app.use(express.json())
 
-// Routes
+// Routes API
 app.use('/api/auth', authRoutes)
 app.use('/api/projects', projectRoutes)
 app.use('/api/sprints', sprintRoutes)
@@ -29,12 +29,10 @@ app.get('/', (req, res) => {
   res.json({ message: 'API Agile Platform fonctionne !' })
 })
 
- // Lancer le serveur
+// Servir le frontend buildé (gère automatiquement toutes les routes)
+app.use(express.static(path.join(__dirname, '../frontend/dist')))
+
+// Lancer le serveur
 app.listen(PORT, () => {
   console.log(`Serveur lancé sur le port ${PORT}`)
-})
-// Servir le frontend buildé
-app.use(express.static(path.join(__dirname, '../frontend/dist')))
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../frontend/dist/index.html'))
 })
