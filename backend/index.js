@@ -25,12 +25,13 @@ app.use('/api/tasks', taskRoutes)
 app.use('/api/notifications', notificationRoutes)
 app.use('/api/history', historyRoutes)
 
-app.get('/', (req, res) => {
-  res.json({ message: 'API Agile Platform fonctionne !' })
-})
-
-// Servir le frontend buildé (gère automatiquement toutes les routes)
+// Servir le frontend buildé (AVANT la route /)
 app.use(express.static(path.join(__dirname, '../frontend/dist')))
+
+// Route API de test (optionnelle)
+app.get('/api/test', (req, res) => {
+  res.json({ message: 'API fonctionne !' })
+})
 
 // Lancer le serveur
 app.listen(PORT, () => {
