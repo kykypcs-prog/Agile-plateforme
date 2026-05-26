@@ -79,7 +79,7 @@ function Register() {
               >
                 <option value="MEMBER">👨‍💻 Membre</option>
                 <option value="CHEF">👔 Chef de projet</option>
-                <option value="ADMIN">👑 Administrateur</option>
+                
               </select>
             </div>
 

@@ -27,76 +27,76 @@ function Index() {
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-cyan-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-pulse animation-delay-4000"></div>
       </div>
 
-      {/* Navbar */}
-      <nav className="relative z-10 flex justify-between items-center px-6 md:px-12 py-5 backdrop-blur-md bg-white/5 border-b border-white/10 sticky top-0">
+      {/* Navbar responsive */}
+      <nav className="relative z-10 flex justify-between items-center px-4 sm:px-6 md:px-12 py-4 md:py-5 backdrop-blur-md bg-white/5 border-b border-white/10 sticky top-0">
         <div className="flex items-center gap-2 group cursor-pointer" onClick={() => navigate('/')}>
           <div className="w-8 h-8 bg-gradient-to-r from-blue-400 to-indigo-500 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform duration-300">
             <span className="text-white text-xs font-bold">A</span>
           </div>
-          <span className="font-semibold text-white tracking-tight text-lg">Agile Platform</span>
+          <span className="font-semibold text-white tracking-tight text-base sm:text-lg">Agile Platform</span>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           <button
             onClick={() => navigate('/login')}
-            className="text-white/80 text-sm hover:text-white transition px-4 py-2 rounded-xl hover:bg-white/10"
+            className="text-white/80 text-xs sm:text-sm hover:text-white transition px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl hover:bg-white/10"
           >
             Se connecter
           </button>
           <button
             onClick={() => navigate('/register')}
-            className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-sm px-5 py-2 rounded-xl hover:from-blue-600 hover:to-indigo-600 transition-all shadow-md hover:shadow-xl transform hover:-translate-y-0.5"
+            className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-xs sm:text-sm px-3 sm:px-5 py-1.5 sm:py-2 rounded-xl hover:from-blue-600 hover:to-indigo-600 transition-all shadow-md hover:shadow-xl transform hover:-translate-y-0.5"
           >
             Commencer gratuitement
           </button>
         </div>
       </nav>
 
-      {/* Hero Section */}
-      <div className="relative z-10 max-w-4xl mx-auto text-center px-6 pt-32 pb-24 animate-on-scroll">
+      {/* Hero Section responsive */}
+      <div className="relative z-10 max-w-4xl mx-auto text-center px-4 sm:px-6 pt-20 sm:pt-32 pb-16 sm:pb-24 animate-on-scroll">
         <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm text-blue-200 text-xs font-medium px-3 py-1.5 rounded-full mb-6 border border-white/20 shadow-sm">
           <div className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-ping"></div>
           Méthode Agile · Scrum · Kanban
         </div>
-        <h1 className="text-4xl md:text-6xl font-bold leading-tight mb-6">
+        <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-6">
           Gérez vos projets avec
           <br />
           <span className="bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">la méthode Agile</span>
         </h1>
-        <p className="text-lg text-blue-100/80 mb-10 max-w-2xl mx-auto leading-relaxed">
+        <p className="text-sm sm:text-base md:text-lg text-blue-100/80 mb-8 sm:mb-10 max-w-2xl mx-auto leading-relaxed px-4">
           Une plateforme complète pour organiser vos sprints, suivre vos tâches et collaborer efficacement en équipe.
         </p>
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
           <button
             onClick={() => navigate('/register')}
-            className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white px-8 py-3 rounded-xl hover:from-blue-600 hover:to-indigo-600 transition-all font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+            className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white px-6 sm:px-8 py-2.5 sm:py-3 rounded-xl hover:from-blue-600 hover:to-indigo-600 transition-all font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-1 text-sm sm:text-base"
           >
             Démarrer maintenant →
           </button>
           <button
             onClick={() => navigate('/login')}
-            className="text-white px-6 py-3 rounded-xl border border-white/30 hover:bg-white/10 transition-all font-medium backdrop-blur-sm"
+            className="text-white px-5 sm:px-6 py-2.5 sm:py-3 rounded-xl border border-white/30 hover:bg-white/10 transition-all font-medium backdrop-blur-sm text-sm sm:text-base"
           >
             Se connecter
           </button>
         </div>
       </div>
 
-      {/* CTA Section - Dégradé bleu/cyan */}
-      <div className="relative z-10 max-w-3xl mx-auto text-center px-6 py-20 animate-on-scroll">
-        <div className="bg-gradient-to-br from-blue-600/30 via-indigo-600/30 to-cyan-600/30 backdrop-blur-xl rounded-3xl p-10 md:p-12 border border-white/20 shadow-2xl">
-          <h2 className="text-2xl md:text-3xl font-bold text-white mb-4">Prêt à transformer votre gestion de projet ?</h2>
-          <p className="text-blue-100 text-md mb-8">Rejoignez des centaines d'équipes qui utilisent Agile Platform au quotidien.</p>
+      {/* CTA Section responsive */}
+      <div className="relative z-10 max-w-3xl mx-auto text-center px-4 sm:px-6 py-16 sm:py-20 animate-on-scroll">
+        <div className="bg-gradient-to-br from-blue-600/30 via-indigo-600/30 to-cyan-600/30 backdrop-blur-xl rounded-2xl sm:rounded-3xl p-8 sm:p-10 md:p-12 border border-white/20 shadow-2xl">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-3 sm:mb-4">Prêt à transformer votre gestion de projet ?</h2>
+          <p className="text-blue-100 text-sm sm:text-base mb-6 sm:mb-8">Rejoignez des centaines d'équipes qui utilisent Agile Platform au quotidien.</p>
           <button
             onClick={() => navigate('/register')}
-            className="bg-white text-indigo-700 px-8 py-3 rounded-xl hover:bg-gray-100 transition-all font-semibold shadow-md hover:shadow-xl transform hover:-scale-105"
+            className="bg-white text-indigo-700 px-6 sm:px-8 py-2.5 sm:py-3 rounded-xl hover:bg-indigo-50 hover:text-indigo-800 hover:shadow-2xl transition-all duration-300 font-semibold text-sm sm:text-base"
           >
             Créer mon compte gratuitement →
           </button>
         </div>
       </div>
 
-      {/* Footer minimal */}
-      <div className="relative z-10 border-t border-white/10 py-6 text-center text-white/40 text-xs">
+      {/* Footer responsive */}
+      <div className="relative z-10 border-t border-white/10 py-6 text-center text-white/40 text-xs sm:text-sm">
         © 2025 Agile Platform · Projet de soutenance
       </div>
 
