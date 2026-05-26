@@ -33,3 +33,8 @@ app.get('/', (req, res) => {
 app.listen(PORT, () => {
   console.log(`Serveur lancé sur le port ${PORT}`)
 })
+// Servir le frontend buildé
+app.use(express.static(path.join(__dirname, '../frontend/dist')))
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../frontend/dist/index.html'))
+})
